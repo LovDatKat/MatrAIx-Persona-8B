@@ -9,7 +9,7 @@ Independent; ``--contrast-filter`` / ``--contrast`` are Contrast (base-value
 pool + one dataset per selected value combination). Progress: one bar per
 dataset.
 
-Sampling (same labels as the UI): ``--count`` (By count), ``--per-cell``
+Sampling (same labels as the UI): ``--count`` (Random), ``--per-cell``
 (By combo), ``--sample-size`` (By share). Optional ``--marginal`` /
 ``--contrast-marginal`` for By-share weights (omit = equal).
 
@@ -922,7 +922,7 @@ def main() -> None:
         type=int,
         default=None,
         help=(
-            f"By count: how many personas to sample (default: {GENERATE_COUNT_DEFAULT}; "
+            f"Random: how many personas to sample (default: {GENERATE_COUNT_DEFAULT}; "
             f"max {GENERATE_COUNT_MAX}; unused when --per-cell / --sample-size / "
             "--strategy fills cells)"
         ),

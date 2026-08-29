@@ -1673,7 +1673,7 @@ export function PersonaSamplingRail({
                       }`}
                     >
                       {tab === "random"
-                        ? t("personaSetup.tabs.byCount")
+                        ? t("personaSetup.tabs.random")
                         : tab === "perCell"
                           ? t("personaSetup.tabs.byCombo")
                           : t("personaSetup.tabs.byShare")}
@@ -1696,7 +1696,7 @@ export function PersonaSamplingRail({
                         className="shrink-0 text-primary"
                       />
                       <span className="min-w-0 flex-1 text-[13px] font-medium text-text-main">
-                        {t("personaSetup.filters.title")}
+                        {t("personaSetup.filters.mixTitle")}
                       </span>
                       <span className="flex min-w-0 shrink-0 flex-col items-end gap-0.5 text-[11px] text-text-dim">
                         {filterSelectionCounts(genFilters).attributes > 0 ||
@@ -1753,7 +1753,7 @@ export function PersonaSamplingRail({
                           />
                         ) : (
                           <p className="text-[11px] text-text-dim">
-                            {t("personaSetup.filters.noFilters")}
+                            {t("personaSetup.filters.noMix")}
                           </p>
                         )}
                       </div>
@@ -1771,7 +1771,7 @@ export function PersonaSamplingRail({
                         contrastSharedFilters.sources.length > 0 ? (
                           <div className="space-y-1">
                             <p className="text-[11px] text-text-dim">
-                              {t("personaSetup.filters.sharedFilters")}
+                              {t("personaSetup.filters.sharedMix")}
                             </p>
                             <PersonaFilterChips
                               filters={contrastSharedFilters}
@@ -1782,7 +1782,7 @@ export function PersonaSamplingRail({
                           </div>
                         ) : (
                           <p className="text-[11px] text-text-dim">
-                            {t("personaSetup.filters.contrastSharedOptional")}
+                            {t("personaSetup.filters.contrastSharedOptionalMix")}
                           </p>
                         )}
                         {contrastPlan.length > 0 ? (

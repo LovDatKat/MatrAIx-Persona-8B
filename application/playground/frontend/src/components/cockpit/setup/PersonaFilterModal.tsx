@@ -57,9 +57,9 @@ export interface PersonaFilterModalProps {
   allowOverlayEdit?: boolean;
   overlayDimensions?: OverlayDimension[];
   contrastPlan?: OverlayContrastArm[];
-  /** Shared filters for Contrast datasets (who is sampled for every copy). */
+  /** Shared mix for Contrast datasets (who is sampled for every copy). */
   contrastSharedFilters?: PersonaDimensionFilters;
-  /** Per-dimension mix for Contrast shared filters (generate · total). */
+  /** Per-dimension mix for Contrast shared attributes (generate · total). */
   contrastMarginals?: PersonaMarginals;
   personaModel?: string;
   onClose: () => void;
@@ -896,7 +896,11 @@ export function PersonaFilterModal({
                 "personaSetup.filters.filterCount",
                 filterSelectionCounts(activeFilters),
               )
-            : t("personaSetup.filters.noFilters")}
+            : t(
+                allowOverlayEdit
+                  ? "personaSetup.filters.noMix"
+                  : "personaSetup.filters.noFilters",
+              )}
           {stratifyMode ? (
             <>
               {" "}
@@ -925,7 +929,11 @@ export function PersonaFilterModal({
                 "personaSetup.filters.filterCount",
                 filterSelectionCounts(activeFilters),
               )
-            : t("personaSetup.filters.noFilters")}
+            : t(
+                allowOverlayEdit
+                  ? "personaSetup.filters.noMix"
+                  : "personaSetup.filters.noFilters",
+              )}
           {stratifyMode ? (
             <>
               {" "}
@@ -953,7 +961,7 @@ export function PersonaFilterModal({
                   sharedLit ? "text-primary" : "text-text-dim"
                 }`}
               >
-                {t("personaSetup.filters.sharedFilters")}
+                {t("personaSetup.filters.sharedMix")}
               </p>
               {sharedLit &&
               showMarginals &&
@@ -1196,7 +1204,11 @@ export function PersonaFilterModal({
           </div>
         ) : selectedGroups.length === 0 && !stratifyMode ? (
           <p className="text-[13px] leading-relaxed text-text-dim">
-            {t("personaSetup.filters.noFilters")}
+            {t(
+              allowOverlayEdit
+                ? "personaSetup.filters.noMix"
+                : "personaSetup.filters.noFilters",
+            )}
           </p>
         ) : (
           <div className="space-y-3">
@@ -1648,7 +1660,11 @@ export function PersonaFilterModal({
       <button
         type="button"
         className="absolute inset-0 bg-surface-dim/75 backdrop-blur-sm"
-        aria-label={t("personaSetup.filters.close")}
+        aria-label={t(
+          allowOverlayEdit
+            ? "personaSetup.filters.closeMix"
+            : "personaSetup.filters.close",
+        )}
         onClick={onClose}
       />
       <div
@@ -1663,14 +1679,22 @@ export function PersonaFilterModal({
               id="persona-filter-modal-title"
               className="font-display text-[18px] font-semibold text-text-main"
             >
-              {t("personaSetup.filters.title")}
+              {t(
+                allowOverlayEdit
+                  ? "personaSetup.filters.mixTitle"
+                  : "personaSetup.filters.title",
+              )}
             </h2>
           </div>
           <div className="flex shrink-0 items-center gap-1">
             <button
               type="button"
               onClick={onClose}
-              aria-label={t("personaSetup.filters.close")}
+              aria-label={t(
+                allowOverlayEdit
+                  ? "personaSetup.filters.closeMix"
+                  : "personaSetup.filters.close",
+              )}
               className={`rounded-md p-2 text-text-variant hover:bg-surface-high ${FOCUS_RING}`}
             >
             <Sym name="close" size={20} />
@@ -1905,7 +1929,7 @@ export function PersonaFilterModal({
                           : "border border-outline/40 bg-surface/70 text-text-variant hover:text-text-main"
                       }`}
                     >
-                      {t("personaSetup.filters.sharedFilters")}
+                      {t("personaSetup.filters.sharedMix")}
                     </button>
                     <Sym
                       name="arrow_forward"
@@ -2170,7 +2194,11 @@ export function PersonaFilterModal({
                 }}
                 className={`rounded-md bg-primary px-4 py-2 text-[14px] font-medium text-on-primary ${FOCUS_RING}`}
               >
-                {t("personaSetup.filters.apply")}
+                {t(
+                  allowOverlayEdit
+                    ? "personaSetup.filters.applyMix"
+                    : "personaSetup.filters.apply",
+                )}
               </button>
             </div>
           </div>

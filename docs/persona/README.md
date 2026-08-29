@@ -261,17 +261,17 @@ Three sampling modes (hover the UI tabs for tooltips):
 
 | UI | CLI | Meaning |
 |----|-----|---------|
-| **By count** | `--count N` | N personas per written dataset |
+| **Random** | `--count N` | N personas per written dataset (uniform over selected filter cells when filters are set) |
 | **By combo** | `--per-cell N` | N personas per selected filter combination |
 | **By share** | `--sample-size N` | Allocate N from per-dimension shares (equal unless you set weights) |
 
 **N is per dataset.** Contrast copies reuse one shared draw, so every contrast
 dataset has the same size. UI and CLI show **one progress bar per dataset**.
 
-Two filter workspaces:
+Two mix workspaces:
 
 - **Independent** — one mix (`--filter`; By share weights via `--marginal`).
-- **Contrast** — optional shared filters (`--contrast-filter` /
+- **Contrast** — optional shared mix (`--contrast-filter` /
   `--contrast-marginal`) plus **contrast attributes** (`--contrast`). Writes the
   complementary **base-value** pool plus one dataset per selected value
   combination. Labels look like `Contrast · Brand=Low`. After Generate, Dataset
