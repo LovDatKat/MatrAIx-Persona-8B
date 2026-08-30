@@ -115,6 +115,26 @@ function findDimensionLabel(
 
 const CONTRAST_COMBO_PREVIEW = 32;
 
+function overlayFilterCopy(
+  t: ReturnType<typeof useI18n>["t"],
+  allowOverlayEdit: boolean,
+) {
+  if (allowOverlayEdit) {
+    return {
+      empty: t("personaSetup.filters.noMix"),
+      close: t("personaSetup.filters.closeMix"),
+      title: t("personaSetup.filters.mixTitle"),
+      apply: t("personaSetup.filters.applyMix"),
+    };
+  }
+  return {
+    empty: t("personaSetup.filters.noFilters"),
+    close: t("personaSetup.filters.close"),
+    title: t("personaSetup.filters.title"),
+    apply: t("personaSetup.filters.apply"),
+  };
+}
+
 type FilterChipGroup = {
   dimId: string;
   label: string;
@@ -266,6 +286,7 @@ export function PersonaFilterModal({
   onConfirm,
 }: PersonaFilterModalProps) {
   const { t, locale } = useI18n();
+  const overlayCopy = overlayFilterCopy(t, allowOverlayEdit);
   const labels = useDimensionLabels();
   const [draft, setDraft] = useState(filters);
   const [draftMarginals, setDraftMarginals] = useState<PersonaMarginals>(
@@ -896,11 +917,7 @@ export function PersonaFilterModal({
                 "personaSetup.filters.filterCount",
                 filterSelectionCounts(activeFilters),
               )
-            : t(
-                allowOverlayEdit
-                  ? "personaSetup.filters.noMix"
-                  : "personaSetup.filters.noFilters",
-              )}
+            : overlayCopy.empty)}
           {stratifyMode ? (
             <>
               {" "}
@@ -929,11 +946,7 @@ export function PersonaFilterModal({
                 "personaSetup.filters.filterCount",
                 filterSelectionCounts(activeFilters),
               )
-            : t(
-                allowOverlayEdit
-                  ? "personaSetup.filters.noMix"
-                  : "personaSetup.filters.noFilters",
-              )}
+            : overlayCopy.empty)}
           {stratifyMode ? (
             <>
               {" "}
@@ -1204,11 +1217,7 @@ export function PersonaFilterModal({
           </div>
         ) : selectedGroups.length === 0 && !stratifyMode ? (
           <p className="text-[13px] leading-relaxed text-text-dim">
-            {t(
-              allowOverlayEdit
-                ? "personaSetup.filters.noMix"
-                : "personaSetup.filters.noFilters",
-            )}
+            {overlayCopy.empty}
           </p>
         ) : (
           <div className="space-y-3">
@@ -1660,11 +1669,7 @@ export function PersonaFilterModal({
       <button
         type="button"
         className="absolute inset-0 bg-surface-dim/75 backdrop-blur-sm"
-        aria-label={t(
-          allowOverlayEdit
-            ? "personaSetup.filters.closeMix"
-            : "personaSetup.filters.close",
-        )}
+        aria-label={overlayCopy.close}
         onClick={onClose}
       />
       <div
@@ -1679,22 +1684,14 @@ export function PersonaFilterModal({
               id="persona-filter-modal-title"
               className="font-display text-[18px] font-semibold text-text-main"
             >
-              {t(
-                allowOverlayEdit
-                  ? "personaSetup.filters.mixTitle"
-                  : "personaSetup.filters.title",
-              )}
+              {overlayCopy.title}
             </h2>
           </div>
           <div className="flex shrink-0 items-center gap-1">
             <button
               type="button"
               onClick={onClose}
-              aria-label={t(
-                allowOverlayEdit
-                  ? "personaSetup.filters.closeMix"
-                  : "personaSetup.filters.close",
-              )}
+              aria-label={overlayCopy.close}
               className={`rounded-md p-2 text-text-variant hover:bg-surface-high ${FOCUS_RING}`}
             >
             <Sym name="close" size={20} />
@@ -2194,11 +2191,7 @@ export function PersonaFilterModal({
                 }}
                 className={`rounded-md bg-primary px-4 py-2 text-[14px] font-medium text-on-primary ${FOCUS_RING}`}
               >
-                {t(
-                  allowOverlayEdit
-                    ? "personaSetup.filters.applyMix"
-                    : "personaSetup.filters.apply",
-                )}
+                {overlayCopy.apply}
               </button>
             </div>
           </div>

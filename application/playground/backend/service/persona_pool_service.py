@@ -1065,22 +1065,21 @@ class PersonaPoolService:
             kind_slug = kind_slug or f"strategy-{task_slug}"
 
             # Non-schema strategy filters are study attributes — auto-stamp overlays.
+            # Skip when the schema catalog is absent (unit tests / ad-hoc roots)
+            # so real schema dims are not treated as overlays.
             catalog = self.repo_root / "persona/schema/dimensions.json"
-            schema_ids = (
-                set(load_dev_dimension_ids(catalog_path=str(catalog)))
-                if catalog.is_file()
-                else set()
-            )
-            overlay_in = list(overlay_dimensions or [])
-            have_overlay = {str(row.get("id") or "").strip() for row in overlay_in}
-            for dim_id, vals in filters.items():
-                if dim_id in schema_ids or dim_id in have_overlay:
-                    continue
-                overlay_in.append({"id": dim_id, "label": dim_id, "values": list(vals)})
-                have_overlay.add(dim_id)
-            if len(overlay_in) != len(overlay_dimensions or []):
-                overlay_dimensions = overlay_in
-                fields = [f for f in fields if f not in have_overlay]
+            if catalog.is_file():
+                schema_ids = set(load_dev_dimension_ids(catalog_path=str(catalog)))
+                overlay_in = list(overlay_dimensions or [])
+                have_overlay = {str(row.get("id") or "").strip() for row in overlay_in}
+                for dim_id, vals in filters.items():
+                    if dim_id in schema_ids or dim_id in have_overlay or dim_id in fields:
+                        continue
+                    overlay_in.append({"id": dim_id, "label": dim_id, "values": list(vals)})
+                    have_overlay.add(dim_id)
+                if len(overlay_in) != len(overlay_dimensions or []):
+                    overlay_dimensions = overlay_in
+                    fields = [f for f in fields if f not in have_overlay]
 
         overlay_norm = normalize_overlay_dimensions(overlay_dimensions)
         contrast_plan: list[dict[str, Any]] = []
