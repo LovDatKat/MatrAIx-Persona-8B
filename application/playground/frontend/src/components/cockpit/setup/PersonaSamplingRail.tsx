@@ -1803,9 +1803,7 @@ export function PersonaSamplingRail({
                         onClick={() => {
                           genSynthTouched.current = true;
                           setGenSynthMode(m);
-                          if (m === "custom" && genSynthMode !== "custom") {
-                            resetCustomGeneration();
-                          }
+                          if (m === "custom") resetCustomGeneration();
                         }}
                         className={`cockpit-segment__btn cockpit-segment__btn--compact w-full ${FOCUS_RING} ${
                           genSynthMode === m
