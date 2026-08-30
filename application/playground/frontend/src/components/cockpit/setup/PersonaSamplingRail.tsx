@@ -1383,7 +1383,7 @@ export function PersonaSamplingRail({
     });
   }, [genAxes, genFilters]);
 
-  // New task → Task plan; Custom stays a blank builder.
+  // New task → wipe Custom. Toggling Task plan / Custom keeps that draft.
   useEffect(() => {
     genSynthTouched.current = false;
     setGenContractSize(null);
@@ -1803,7 +1803,6 @@ export function PersonaSamplingRail({
                         onClick={() => {
                           genSynthTouched.current = true;
                           setGenSynthMode(m);
-                          if (m === "custom") resetCustomGeneration();
                         }}
                         className={`cockpit-segment__btn cockpit-segment__btn--compact w-full ${FOCUS_RING} ${
                           genSynthMode === m
