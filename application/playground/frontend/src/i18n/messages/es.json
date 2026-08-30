@@ -545,6 +545,7 @@
   "personaSetup.allocationTitle.equalTotal": "Asegura cobertura y luego recorta al tamaño de muestra",
   "personaSetup.allocationTitle.perCell": "Toma N personas de cada combinación de estratificación",
   "personaSetup.allocationTitle.proportional": "Asigna el tamaño de muestra según la población de la celda (Hamilton)",
+  "personaSetup.allocationTitle.proportionalShares": "Asigna el tamaño de muestra según las cuotas declaradas (Hamilton)",
   "personaSetup.cohortLocked": "Cohorte bloqueada para esta ejecución: usa Restablecer para cambiar personas o ajustes de muestra.",
   "personaSetup.cohortReady": "{pool} · cohorte lista",
   "personaSetup.common.cancel": "Cancelar",
@@ -689,6 +690,7 @@
   "personaSetup.strategy.selectedValues": "Valores seleccionados de {label}",
   "personaSetup.strategy.sources": "Fuentes",
   "personaSetup.strategy.stratifyFields": "Estratificar {fields}",
+  "personaSetup.strategy.targetMix": "Mezcla objetivo",
   "personaSetup.strategy.totalSample": "Muestra total · {count, plural, one {# persona} other {# personas}}",
   "personaSetup.synthesize": "Sintetizar para completar esta tarea",
   "personaSetup.synthesizing": "Sintetizando…",
@@ -1484,6 +1486,11 @@
   "personaSetup.tabs.byCount": "Aleatorio",
   "personaSetup.tabs.byCombo": "Por combo",
   "personaSetup.tabs.byShare": "Por cuota",
+  "personaSetup.synth.taskPlan": "Plan de tarea",
+  "personaSetup.synth.custom": "Personalizado",
+  "personaSetup.synth.taskPlanHint": "Sintetiza el cohorte definido por la estrategia de personas de esta tarea.",
+  "personaSetup.synth.customDimsNote": "Atributos personalizados ({count}) declarados por el plan de tarea: se aplican automáticamente.",
+  "personaSetup.synth.sizeFromCells": "El tamaño del cohorte lo fijan celdas × por celda.",
   "personaSetup.progress.independentDataset": "Independiente",
   "personaSetup.progress.waiting": "Esperando…"
 }

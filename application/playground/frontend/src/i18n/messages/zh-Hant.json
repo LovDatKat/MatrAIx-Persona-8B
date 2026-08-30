@@ -545,6 +545,7 @@
   "personaSetup.allocationTitle.equalTotal": "先確保涵蓋範圍，再裁切至取樣規模",
   "personaSetup.allocationTitle.perCell": "從每個分層組合取 N 個數位人",
   "personaSetup.allocationTitle.proportional": "依各格人口數分配取樣規模（Hamilton）",
+  "personaSetup.allocationTitle.proportionalShares": "依宣告的目標比例分配取樣規模（Hamilton）",
   "personaSetup.cohortLocked": "本次執行已鎖定群組——使用重設修改數位人或抽樣設定。",
   "personaSetup.cohortReady": "{pool} · 群組已就緒",
   "personaSetup.common.cancel": "取消",
@@ -689,6 +690,7 @@
   "personaSetup.strategy.selectedValues": "{label} 的已選值",
   "personaSetup.strategy.sources": "來源",
   "personaSetup.strategy.stratifyFields": "依 {fields} 分層",
+  "personaSetup.strategy.targetMix": "目標比例",
   "personaSetup.strategy.totalSample": "總取樣數 · {count, plural, one {# 個數位人} other {# 個數位人}}",
   "personaSetup.synthesize": "合成以補足此任務",
   "personaSetup.synthesizing": "合成中…",
@@ -1484,6 +1486,11 @@
   "personaSetup.tabs.byCount": "隨機",
   "personaSetup.tabs.byCombo": "按組合",
   "personaSetup.tabs.byShare": "按占比",
+  "personaSetup.synth.taskPlan": "任務方案",
+  "personaSetup.synth.custom": "自訂",
+  "personaSetup.synth.taskPlanHint": "依本任務的數位人策略合成對應世代。",
+  "personaSetup.synth.customDimsNote": "任務方案宣告的自訂屬性（{count}）— 將自動寫入。",
+  "personaSetup.synth.sizeFromCells": "世代規模由 儲存格 × 每格 決定。",
   "personaSetup.progress.independentDataset": "獨立資料集",
   "personaSetup.progress.waiting": "等待中…"
 }

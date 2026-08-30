@@ -545,6 +545,7 @@
   "personaSetup.allocationTitle.equalTotal": "先确保覆盖，再裁剪到采样规模",
   "personaSetup.allocationTitle.perCell": "从每个分层组合中抽取 N 个数字人",
   "personaSetup.allocationTitle.proportional": "按单元格人数分配采样规模（Hamilton）",
+  "personaSetup.allocationTitle.proportionalShares": "按声明的目标比例分配采样规模（Hamilton）",
   "personaSetup.cohortLocked": "本次运行已锁定数字人群组 — 使用“重置”才能更改数字人或采样设置。",
   "personaSetup.cohortReady": "{pool} · 数字人群组已就绪",
   "personaSetup.common.cancel": "取消",
@@ -689,6 +690,7 @@
   "personaSetup.strategy.selectedValues": "{label}的已选值",
   "personaSetup.strategy.sources": "来源",
   "personaSetup.strategy.stratifyFields": "按 {fields} 分层",
+  "personaSetup.strategy.targetMix": "目标比例",
   "personaSetup.strategy.totalSample": "总采样数 · {count, plural, one {# 个数字人} other {# 个数字人}}",
   "personaSetup.synthesize": "合成以补足此任务",
   "personaSetup.synthesizing": "正在合成…",
@@ -1484,6 +1486,11 @@
   "personaSetup.tabs.byCount": "随机",
   "personaSetup.tabs.byCombo": "按组合",
   "personaSetup.tabs.byShare": "按占比",
+  "personaSetup.synth.taskPlan": "任务方案",
+  "personaSetup.synth.custom": "自定义",
+  "personaSetup.synth.taskPlanHint": "按本任务的数字人策略合成对应队列。",
+  "personaSetup.synth.customDimsNote": "任务方案声明的自定义属性（{count}）— 将自动写入。",
+  "personaSetup.synth.sizeFromCells": "队列规模由 单元格 × 每格 决定。",
   "personaSetup.progress.independentDataset": "独立数据集",
   "personaSetup.progress.waiting": "等待中…"
 }

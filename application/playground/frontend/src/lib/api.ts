@@ -363,7 +363,11 @@ export const api = {
     perCell?: number;
     /** Stratified allocation: perCell | proportional | equalTotal. */
     allocation?: string;
+    /** Declared target shares `{ dim: { value: weight } }` for a proportional mix. */
+    portions?: Record<string, Record<string, number>>;
     taskPath?: string;
+    /** Extra dimensions to carry per persona beyond the card whitelist. */
+    includeDimensions?: string[];
   }) =>
     request<PersonaPoolSampleResult>("/api/persona-pool/sample", {
       method: "POST",

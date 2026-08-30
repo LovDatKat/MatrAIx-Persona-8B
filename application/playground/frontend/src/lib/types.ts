@@ -1134,6 +1134,8 @@ export interface TaskPersonaSampling {
   fields?: string[];
   allocation?: "perCell" | "proportional" | "equalTotal" | string | null;
   perCell?: number | null;
+  /** Declared target shares `{ dim: { value: weight } }` for a proportional mix. */
+  portions?: Record<string, Record<string, number>> | null;
 }
 
 export interface TaskPersonaStrategy {

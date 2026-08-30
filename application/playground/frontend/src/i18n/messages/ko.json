@@ -545,6 +545,7 @@
   "personaSetup.allocationTitle.equalTotal": "커버리지를 확보한 뒤 샘플 크기로 자름",
   "personaSetup.allocationTitle.perCell": "층화 조합마다 N명씩 가져옴",
   "personaSetup.allocationTitle.proportional": "셀 인구에 따라 샘플 배분 (Hamilton)",
+  "personaSetup.allocationTitle.proportionalShares": "선언한 목표 비중에 따라 샘플 배분 (Hamilton)",
   "personaSetup.cohortLocked": "이 실행의 코호트는 잠겨 있습니다 — 페르소나·샘플 설정을 바꾸려면 재설정하세요.",
   "personaSetup.cohortReady": "{pool} · 코호트 준비됨",
   "personaSetup.common.cancel": "취소",
@@ -689,6 +690,7 @@
   "personaSetup.strategy.selectedValues": "{label} 선택 값",
   "personaSetup.strategy.sources": "출처",
   "personaSetup.strategy.stratifyFields": "층화 {fields}",
+  "personaSetup.strategy.targetMix": "목표 비중",
   "personaSetup.strategy.totalSample": "전체 샘플 · {count, plural, other {#명}}",
   "personaSetup.synthesize": "합성하여 이 작업 채우기",
   "personaSetup.synthesizing": "합성 중…",
@@ -1484,6 +1486,11 @@
   "personaSetup.tabs.byCount": "랜덤",
   "personaSetup.tabs.byCombo": "조합별",
   "personaSetup.tabs.byShare": "비중",
+  "personaSetup.synth.taskPlan": "작업 계획",
+  "personaSetup.synth.custom": "사용자 지정",
+  "personaSetup.synth.taskPlanHint": "이 작업의 페르소나 전략이 정의한 코호트를 합성합니다.",
+  "personaSetup.synth.customDimsNote": "작업 계획이 선언한 사용자 지정 속성({count}) — 자동으로 적용됩니다.",
+  "personaSetup.synth.sizeFromCells": "코호트 규모는 셀 × 셀당으로 정해집니다.",
   "personaSetup.progress.independentDataset": "독립",
   "personaSetup.progress.waiting": "대기 중…"
 }

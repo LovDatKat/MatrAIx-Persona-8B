@@ -1150,6 +1150,23 @@ def create_app(catalog_path: Optional[str] = None) -> FastAPI:
         services: AppState = Depends(get_services),
     ) -> Dict[str, Any]:
         try:
+            portions = body.portions
+            if not portions and body.taskPath:
+                from backend.service.task_persona_strategy_service import (
+                    get_task_persona_strategy,
+                )
+
+                strategy = get_task_persona_strategy(
+                    body.taskPath, repo_root=services.repo_root
+                )
+                sampling = (
+                    strategy.get("sampling")
+                    if isinstance(strategy, dict) and isinstance(strategy.get("sampling"), dict)
+                    else {}
+                )
+                raw = sampling.get("portions") if isinstance(sampling, dict) else None
+                if isinstance(raw, dict) and raw:
+                    portions = raw
             return services.persona_pool.sample_pool(
                 persona_pool=body.pool,
                 sample_size=body.sampleSize,
@@ -1159,9 +1176,11 @@ def create_app(catalog_path: Optional[str] = None) -> FastAPI:
                 stratify_fields=body.fields,
                 sample_size_per_value_group=body.perCell,
                 allocation=body.allocation,
+                portions=portions,
                 task_path=body.taskPath,
                 preview_limit=body.previewLimit,
                 include_persona_ids=body.includePersonaIds,
+                include_dimensions=body.includeDimensions,
             )
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc

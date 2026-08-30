@@ -28,7 +28,10 @@ from matraix.persona_job import (
     sample_personas_stratified,
 )
 
-from backend.service.persona_sampling_alloc import sample_proportional_from_buckets
+from backend.service.persona_sampling_alloc import (
+    sample_by_portions_from_buckets,
+    sample_proportional_from_buckets,
+)
 
 PERSONA_CARD_DIMENSIONS = (
     "age_bracket",
@@ -1036,15 +1039,48 @@ class PersonaPoolService:
                 if isinstance(sampling.get("perCell"), int)
                 else None
             )
+            # Request sampleSize is an explicit operator override; strategy is fallback.
             sample_n = (
-                sampling.get("sampleSize")
-                if isinstance(sampling.get("sampleSize"), int)
-                else None
+                sample_n
+                if sample_n is not None
+                else (
+                    sampling.get("sampleSize")
+                    if isinstance(sampling.get("sampleSize"), int)
+                    else None
+                )
             )
+            if marginals is None:
+                strategy_portions = strategy.get("portions")
+                if not isinstance(strategy_portions, dict) or not strategy_portions:
+                    strategy_portions = (
+                        sampling.get("portions")
+                        if isinstance(sampling.get("portions"), dict)
+                        else None
+                    )
+                if isinstance(strategy_portions, dict) and strategy_portions:
+                    marginals = strategy_portions
             if isinstance(strategy.get("seed"), int):
                 seed = int(strategy["seed"])
             task_slug = _cohort_slug(Path(str(task_path).strip()).name)
             kind_slug = kind_slug or f"strategy-{task_slug}"
+
+            # Non-schema strategy filters are study attributes — auto-stamp overlays.
+            catalog = self.repo_root / "persona/schema/dimensions.json"
+            schema_ids = (
+                set(load_dev_dimension_ids(catalog_path=str(catalog)))
+                if catalog.is_file()
+                else set()
+            )
+            overlay_in = list(overlay_dimensions or [])
+            have_overlay = {str(row.get("id") or "").strip() for row in overlay_in}
+            for dim_id, vals in filters.items():
+                if dim_id in schema_ids or dim_id in have_overlay:
+                    continue
+                overlay_in.append({"id": dim_id, "label": dim_id, "values": list(vals)})
+                have_overlay.add(dim_id)
+            if len(overlay_in) != len(overlay_dimensions or []):
+                overlay_dimensions = overlay_in
+                fields = [f for f in fields if f not in have_overlay]
 
         overlay_norm = normalize_overlay_dimensions(overlay_dimensions)
         contrast_plan: list[dict[str, Any]] = []
@@ -1079,6 +1115,11 @@ class PersonaPoolService:
                         per_cell_n = None
                         sample_n = None
                         alloc = None
+
+        # Declared target shares generate to that mix (exact marginals), not
+        # uniform per-cell ceil that overshoots and ignores the mix.
+        if marginals and alloc == "proportional":
+            alloc = "independentMarginal"
 
         combos = contrast_stamp_combinations(contrast_plan)
         dataset_total = 1 + len(combos)
@@ -1592,6 +1633,21 @@ class PersonaPoolService:
             }
         return {}
 
+    @staticmethod
+    def _resolve_extra_card_dimensions(
+        *,
+        stratify_fields: list[str] | None,
+        include_dimensions: list[str] | None,
+    ) -> list[str]:
+        seen: set[str] = set()
+        out: list[str] = []
+        for raw in [*(stratify_fields or []), *(include_dimensions or [])]:
+            dim_id = str(raw or "").removeprefix("dimensions.").strip()
+            if dim_id and dim_id != "source" and dim_id not in seen:
+                seen.add(dim_id)
+                out.append(dim_id)
+        return out
+
     def _persona_card(self, entry: dict[str, Any]) -> dict[str, Any]:
         dims = self._yaml_dimensions(entry)
         display = {
@@ -2072,9 +2128,11 @@ class PersonaPoolService:
         stratify_fields: list[str] | None = None,
         sample_size_per_value_group: int | None = None,
         allocation: str | None = None,
+        portions: dict[str, dict[str, float]] | None = None,
         task_path: str | None = None,
         preview_limit: int = PERSONA_CARD_PREVIEW_DEFAULT,
         include_persona_ids: bool | None = None,
+        include_dimensions: list[str] | None = None,
     ) -> dict[str, Any]:
         from backend.service.persona_1m_pool import (
             is_production_1m_root,
@@ -2089,6 +2147,11 @@ class PersonaPoolService:
 
         # Production 1M: sample + materialize a YAML cohort. Never synthesize.
         if is_production_1m_root(persona_pool):
+            if portions:
+                raise ValueError(
+                    "portions target is not yet supported for matraix-persona-1m; "
+                    "sample from a dev/generated pool to hit a declared mix"
+                )
             result = sample_production_1m(
                 repo_root=self.repo_root,
                 sample_size=sample_size,
@@ -2165,6 +2228,8 @@ class PersonaPoolService:
                 stratify_fields=stratify_fields,
                 sample_size_per_value_group=sample_size_per_value_group,
                 allocation=allocation_norm,
+                portions=portions,
+                include_dimensions=include_dimensions,
             )
         except ValueError as exc:
             raise ValueError(with_coverage_hint(str(exc), task_path=task_path)) from exc
@@ -2185,6 +2250,8 @@ class PersonaPoolService:
         stratify_fields: list[str] | None = None,
         sample_size_per_value_group: int | None = None,
         allocation: str | None = None,
+        portions: dict[str, dict[str, float]] | None = None,
+        include_dimensions: list[str] | None = None,
     ) -> dict[str, Any]:
         matched = self.filter_pool(
             persona_pool=persona_pool,
@@ -2214,9 +2281,28 @@ class PersonaPoolService:
                 raise ValueError(f"No personas with stratify fields ({label})")
 
             if allocation_norm == "proportional":
-                chosen = sample_proportional_from_buckets(
-                    buckets, sample_size=sample_size, seed=seed
-                )
+                if portions:
+                    if len(bare_fields) != 1:
+                        raise ValueError(
+                            "portions currently supports a single stratify field "
+                            f"(got {', '.join(bare_fields)})"
+                        )
+                    field = bare_fields[0]
+                    weights = portions.get(field)
+                    if not isinstance(weights, dict) or not weights:
+                        raise ValueError(
+                            f"portions has no target weights for stratify field {field!r}"
+                        )
+                    chosen = sample_by_portions_from_buckets(
+                        buckets,
+                        weights=weights,
+                        sample_size=sample_size,
+                        seed=seed,
+                    )
+                else:
+                    chosen = sample_proportional_from_buckets(
+                        buckets, sample_size=sample_size, seed=seed
+                    )
             elif allocation_norm == "perCell" or sample_size_per_value_group is not None:
                 per_group = (
                     int(sample_size_per_value_group)
@@ -2255,6 +2341,18 @@ class PersonaPoolService:
                 )
             chosen = sample_personas(matched, sample_size=sample_size, seed=seed)
         personas = [self._persona_card(entry) for entry in chosen]
+        extra_dims = self._resolve_extra_card_dimensions(
+            stratify_fields=stratify_fields,
+            include_dimensions=include_dimensions,
+        )
+        if extra_dims:
+            for card, entry in zip(personas, chosen):
+                full = self._yaml_dimensions(entry)
+                dims_out = card.setdefault("dimensions", {})
+                for dim_id in extra_dims:
+                    value = full.get(dim_id)
+                    if value is not None and str(value).strip():
+                        dims_out[dim_id] = str(value)
         persona_ids = [row["personaId"] for row in personas if row["personaId"]]
         pool_out = persona_pool
         if len(persona_ids) > PERSONA_UI_ID_LIST_MAX:

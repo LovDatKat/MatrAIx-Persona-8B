@@ -545,6 +545,7 @@
   "personaSetup.allocationTitle.equalTotal": "Ensure coverage then clip to sample size",
   "personaSetup.allocationTitle.perCell": "Take N personas from every stratify combination",
   "personaSetup.allocationTitle.proportional": "Allocate sample size by cell population (Hamilton)",
+  "personaSetup.allocationTitle.proportionalShares": "Allocate sample size by declared target shares (Hamilton)",
   "personaSetup.cohortLocked": "Cohort locked for this run — use Reset to change personas or sample settings.",
   "personaSetup.cohortReady": "{pool} · cohort ready",
   "personaSetup.common.cancel": "Cancel",
@@ -693,6 +694,7 @@
   "personaSetup.strategy.selectedValues": "{label} selected values",
   "personaSetup.strategy.sources": "Sources",
   "personaSetup.strategy.stratifyFields": "Stratify {fields}",
+  "personaSetup.strategy.targetMix": "Target mix",
   "personaSetup.strategy.totalSample": "Total sample · {count, plural, one {# persona} other {# personas}}",
   "personaSetup.synthesize": "Synthesize to fill this task",
   "personaSetup.synthesizing": "Synthesizing…",
@@ -1484,6 +1486,11 @@
   "personaSetup.tabs.byCount": "Random",
   "personaSetup.tabs.byCombo": "By combo",
   "personaSetup.tabs.byShare": "By share",
+  "personaSetup.synth.taskPlan": "Task plan",
+  "personaSetup.synth.custom": "Custom",
+  "personaSetup.synth.taskPlanHint": "Synthesizes the cohort defined by this task’s persona strategy.",
+  "personaSetup.synth.customDimsNote": "Custom attributes ({count}) declared by the task plan — stamped automatically.",
+  "personaSetup.synth.sizeFromCells": "Cohort size is fixed by cells × per-cell.",
   "personaSetup.progress.independentDataset": "Independent",
   "personaSetup.progress.waiting": "Waiting…"
 }

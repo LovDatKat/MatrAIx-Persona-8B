@@ -947,10 +947,14 @@ class PersonaPoolSampleRequest(BaseModel):
     """Personas per cell when ``allocation="perCell"``."""
     allocation: Optional[str] = None
     """Stratified allocation: perCell | proportional | equalTotal."""
+    portions: Optional[Dict[str, Dict[str, float]]] = None
+    """Declared target shares `{ dim: { value: weight } }` for proportional mix."""
     taskPath: Optional[str] = None
     """Optional task path — included in coverage error hints."""
     previewLimit: int = 32
     includePersonaIds: Optional[bool] = None
+    includeDimensions: Optional[List[str]] = None
+    """Extra YAML dimensions to merge onto persona cards."""
 
 
 class OverlayDimension(BaseModel):

@@ -545,6 +545,7 @@
   "personaSetup.allocationTitle.equalTotal": "カバーを確保してからサンプルサイズに切り詰め",
   "personaSetup.allocationTitle.perCell": "層化の各組み合わせから N 人ずつ取得",
   "personaSetup.allocationTitle.proportional": "セル人口に応じてサンプルを配分（Hamilton）",
+  "personaSetup.allocationTitle.proportionalShares": "宣言したターゲット比率に応じてサンプルを配分（Hamilton）",
   "personaSetup.cohortLocked": "この実行のコホートはロック済み — ペルソナや抽出設定を変えるにはリセットしてください。",
   "personaSetup.cohortReady": "{pool} · コホート準備完了",
   "personaSetup.common.cancel": "キャンセル",
@@ -689,6 +690,7 @@
   "personaSetup.strategy.selectedValues": "{label} の選択値",
   "personaSetup.strategy.sources": "ソース",
   "personaSetup.strategy.stratifyFields": "層化 {fields}",
+  "personaSetup.strategy.targetMix": "ターゲット比率",
   "personaSetup.strategy.totalSample": "合計サンプル · {count, plural, other {#人}}",
   "personaSetup.synthesize": "合成してこのタスクを埋める",
   "personaSetup.synthesizing": "合成中…",
@@ -1484,6 +1486,11 @@
   "personaSetup.tabs.byCount": "ランダム",
   "personaSetup.tabs.byCombo": "組合せ",
   "personaSetup.tabs.byShare": "比率指定",
+  "personaSetup.synth.taskPlan": "タスク計画",
+  "personaSetup.synth.custom": "カスタム",
+  "personaSetup.synth.taskPlanHint": "このタスクのペルソナ戦略で定義されたコホートを合成します。",
+  "personaSetup.synth.customDimsNote": "タスク計画で宣言されたカスタム属性（{count}）— 自動的に付与されます。",
+  "personaSetup.synth.sizeFromCells": "コホート数はセル×セルごとで決まります。",
   "personaSetup.progress.independentDataset": "独立",
   "personaSetup.progress.waiting": "待機中…"
 }
