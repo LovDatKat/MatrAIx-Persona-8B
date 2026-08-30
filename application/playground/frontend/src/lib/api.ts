@@ -14,7 +14,6 @@ import type {
   PersonaMatchAttributesResponse,
   PersonaPoolCatalog,
   OverlayDimension,
-  OverlayContrastArm,
   PersonaPoolCardsResponse,
   PersonaPoolIdsResponse,
   PersonaPoolPersonaDetail,
@@ -387,7 +386,6 @@ export const api = {
       sampleSize?: number;
       marginals?: Record<string, Record<string, number>>;
       overlayDimensions?: OverlayDimension[];
-      contrast?: OverlayContrastArm[];
       taskPath?: string;
       name?: string;
     },

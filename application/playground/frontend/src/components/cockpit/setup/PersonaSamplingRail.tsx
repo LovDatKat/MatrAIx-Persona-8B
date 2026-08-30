@@ -186,6 +186,69 @@ function clampGenerateCount(value: number): number {
   return Math.min(PERSONA_GENERATE_COUNT_MAX, Math.max(1, Math.round(value)));
 }
 
+function strategyToGenFilters(strategy: TaskPersonaStrategy): PersonaDimensionFilters {
+  const sources = Array.isArray(strategy.sources)
+    ? strategy.sources.filter(
+        (value): value is string => typeof value === "string" && Boolean(value.trim()),
+      )
+    : [];
+  const dimensionFilters: Record<string, string[]> = {};
+  for (const [key, values] of Object.entries(strategy.dimensionFilters ?? {})) {
+    if (!Array.isArray(values)) continue;
+    const cleaned = values.filter(
+      (value): value is string => typeof value === "string" && Boolean(value.trim()),
+    );
+    if (cleaned.length > 0) dimensionFilters[key] = cleaned;
+  }
+  return { sources, dimensionFilters };
+}
+
+/** Custom-generate defaults copied from the task plan so Sample starts on-contract. */
+function planSynthDefaults(strategy: TaskPersonaStrategy): {
+  genMode: "random" | "perCell" | "total";
+  genCount: number;
+  genPerCell: number;
+  genSampleSize: number;
+  filters: PersonaDimensionFilters;
+} {
+  const s = readStrategySampling(strategy);
+  const filters = strategyToGenFilters(strategy);
+  const fieldIds = s.fields.length > 0 ? s.fields : Object.keys(filters.dimensionFilters);
+  const combos = fieldIds.reduce(
+    (n, f) => n * Math.max(1, (filters.dimensionFilters[f] ?? []).length),
+    1,
+  );
+  const perCellN = Math.max(1, s.perCell ?? 1);
+  if (s.mode === "random") {
+    const n = clampGenerateCount(s.sampleSize ?? 8);
+    return {
+      genMode: "random",
+      genCount: n,
+      genPerCell: perCellN,
+      genSampleSize: n,
+      filters,
+    };
+  }
+  if (s.allocation === "perCell") {
+    const n = clampGenerateCount(combos * perCellN);
+    return {
+      genMode: "perCell",
+      genCount: n,
+      genPerCell: perCellN,
+      genSampleSize: n,
+      filters,
+    };
+  }
+  const n = clampGenerateCount(s.sampleSize ?? 8);
+  return {
+    genMode: "total",
+    genCount: n,
+    genPerCell: perCellN,
+    genSampleSize: n,
+    filters,
+  };
+}
+
 function PersonaFilterChips({
   filters,
   fields,
@@ -715,7 +778,7 @@ function ContractSynthBlock({
 }: {
   strategy: TaskPersonaStrategy;
   view: {
-    fill: "random" | "perCell" | "proportional";
+    fill: "random" | "perCell" | "proportional" | "equalTotal";
     derivedN: number;
     sizeEditable: boolean;
   } | null;
@@ -965,6 +1028,7 @@ export function PersonaSamplingRail({
     hasTaskStrategy ? "contract" : "custom",
   );
   const genSynthTouched = useRef(false);
+  const customGenTouched = useRef(false);
   const [genContractSize, setGenContractSize] = useState<number | null>(null);
   const [genContractSizeDraft, setGenContractSizeDraft] = useState<string | null>(
     null,
@@ -1360,17 +1424,28 @@ export function PersonaSamplingRail({
   );
   useEffect(() => {
     setGenMarginals((prev) => {
+      const portions = taskPersonaStrategy?.sampling?.portions;
       const next: Record<string, Record<string, number>> = {};
       for (const dim of genAxes) {
         const values = genFilters.dimensionFilters[dim] ?? [];
+        const planW = portions?.[dim];
         next[dim] = {};
         for (const value of values) {
-          next[dim][value] = prev[dim]?.[value] ?? 1;
+          const planned =
+            planW && typeof planW[value] === "number" ? planW[value] : undefined;
+          next[dim][value] = prev[dim]?.[value] ?? planned ?? 1;
         }
       }
       return next;
     });
-  }, [genAxes, genFilters]);
+  }, [genAxes, genFilters, taskPersonaStrategy]);
+
+  // New task → Task plan + Custom sample/mix start from persona_strategy.json.
+  useEffect(() => {
+    genSynthTouched.current = false;
+    customGenTouched.current = false;
+    setGenContractSize(null);
+  }, [taskPath]);
 
   // Keep the synth path defaulted to the task plan once a strategy loads, until
   // the operator explicitly picks a path.
@@ -1378,6 +1453,16 @@ export function PersonaSamplingRail({
     if (genSynthTouched.current) return;
     setGenSynthMode(hasTaskStrategy ? "contract" : "custom");
   }, [hasTaskStrategy]);
+
+  useEffect(() => {
+    if (!taskPersonaStrategy || customGenTouched.current) return;
+    const d = planSynthDefaults(taskPersonaStrategy);
+    setGenMode(d.genMode);
+    setGenCount(d.genCount);
+    setGenPerCell(d.genPerCell);
+    setGenSampleSize(d.genSampleSize);
+    setGenFilters(d.filters);
+  }, [taskPersonaStrategy]);
 
   const isContractSynth =
     genSynthMode === "contract" && hasTaskStrategy && !!taskPersonaStrategy;
@@ -1387,12 +1472,14 @@ export function PersonaSamplingRail({
   const contractView = useMemo(() => {
     if (!taskPersonaStrategy) return null;
     const s = readStrategySampling(taskPersonaStrategy);
-    const fill: "random" | "perCell" | "proportional" =
+    const fill: "random" | "perCell" | "proportional" | "equalTotal" =
       s.mode === "random"
         ? "random"
-        : s.allocation === "proportional"
-          ? "proportional"
-          : "perCell";
+        : s.allocation === "perCell"
+          ? "perCell"
+          : s.allocation === "proportional"
+            ? "proportional"
+            : "equalTotal";
     const filters = taskPersonaStrategy.dimensionFilters ?? {};
     const fieldIds = s.fields.length > 0 ? s.fields : Object.keys(filters);
     const combos = fieldIds.reduce(
@@ -1830,7 +1917,10 @@ export function PersonaSamplingRail({
                         ],
                       )}
                       disabled={disabled || generating}
-                      onClick={() => setGenMode(tab)}
+                      onClick={() => {
+                        customGenTouched.current = true;
+                        setGenMode(tab);
+                      }}
                       className={`cockpit-segment__btn cockpit-segment__btn--compact w-full ${FOCUS_RING} ${
                         genMode === tab ? "cockpit-segment__btn--active" : ""
                       }`}
@@ -1931,6 +2021,7 @@ export function PersonaSamplingRail({
                           onBlur={() => {
                             const raw = genCountDraft;
                             setGenCountDraft(null);
+                            customGenTouched.current = true;
                             setGenCount(
                               clampGenerateCount(
                                 raw === "" || raw == null
@@ -1983,6 +2074,7 @@ export function PersonaSamplingRail({
                           disabled={disabled || generating}
                           onChange={(e) => {
                             const next = Number(e.target.value);
+                            customGenTouched.current = true;
                             if (genMode === "perCell") {
                               setGenPerCell(clampPerCell(next));
                             } else {
@@ -2665,6 +2757,7 @@ export function PersonaSamplingRail({
         onClose={() => setFilterOpen(false)}
         onConfirm={(next, nextMarginals, nextOverlay) => {
           if (filterTarget === "generation") {
+            customGenTouched.current = true;
             if (nextOverlay !== undefined) setGenOverlay(nextOverlay);
             setGenFilters(next);
             if (nextMarginals) setGenMarginals(nextMarginals);

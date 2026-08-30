@@ -13,7 +13,9 @@ Sampling (same labels as the UI): ``--count`` (Random), ``--per-cell``
 (By combo), ``--sample-size`` (By share). Optional ``--marginal`` /
 ``--contrast-marginal`` for By-share weights (omit = equal).
 
-``--strategy PATH`` / ``--task PATH --per-cell N`` fill task cells.
+``--strategy PATH`` fills ``persona_strategy.json`` (filters, allocation, and
+declared mix via ``sampling.portions`` or weighted ``dimensionFilters``).
+``--task PATH --per-cell N`` fills grounding.toml probe cells only.
 ``--contrast-from POOL`` clones an existing dataset (``--contrast-dim`` /
 ``--contrast-value`` for a single arm).
 
@@ -225,6 +227,27 @@ def _resolve_strategy_path(raw: str) -> Path:
     raise SystemExit(f"Strategy path not found: {raw}")
 
 
+def _as_portions(value: object) -> dict[str, dict[str, float]]:
+    """``{dimension: {value: weight}}`` — same shape as Playground ``sampling.portions``."""
+    if not isinstance(value, dict):
+        return {}
+    out: dict[str, dict[str, float]] = {}
+    for dim, weights in value.items():
+        dim_name = str(dim).removeprefix("dimensions.").strip()
+        if not dim_name or not isinstance(weights, dict):
+            continue
+        coerced: dict[str, float] = {}
+        for label, weight in weights.items():
+            key = str(label).strip()
+            if not key or isinstance(weight, bool) or not isinstance(weight, (int, float)):
+                continue
+            if float(weight) > 0:
+                coerced[key] = float(weight)
+        if coerced:
+            out[dim_name] = coerced
+    return out
+
+
 def _load_strategy(path: Path) -> dict[str, object]:
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
@@ -236,9 +259,20 @@ def _load_strategy(path: Path) -> dict[str, object]:
     if not isinstance(filters, dict):
         filters = {}
     normalized_filters: dict[str, list[str]] = {}
+    derived_portions: dict[str, dict[str, float]] = {}
     for key, values in filters.items():
         dim = str(key).removeprefix("dimensions.").strip()
         if not dim:
+            continue
+        if isinstance(values, dict):
+            weights = _as_portions({dim: values}).get(dim, {})
+            cleaned = list(weights) if weights else [
+                str(label).strip() for label in values if str(label).strip()
+            ]
+            if cleaned:
+                normalized_filters[dim] = cleaned
+            if weights:
+                derived_portions[dim] = weights
             continue
         if isinstance(values, list):
             cleaned = [str(value).strip() for value in values if str(value).strip()]
@@ -253,15 +287,19 @@ def _load_strategy(path: Path) -> dict[str, object]:
         stratify = []
     per_group = sampling.get("perCell")
     sample_size = sampling.get("sampleSize")
+    portions = _as_portions(sampling.get("portions")) or derived_portions
+    block: dict[str, object] = {
+        "mode": str(sampling.get("mode") or "random"),
+        "fields": [str(field).strip() for field in stratify if str(field).strip()],
+        "allocation": sampling.get("allocation"),
+        "perCell": per_group if isinstance(per_group, int) else None,
+        "sampleSize": sample_size if isinstance(sample_size, int) else None,
+    }
+    if portions:
+        block["portions"] = portions
     return {
         "dimensionFilters": normalized_filters,
-        "sampling": {
-            "mode": str(sampling.get("mode") or "random"),
-            "fields": [str(field).strip() for field in stratify if str(field).strip()],
-            "allocation": sampling.get("allocation"),
-            "perCell": per_group if isinstance(per_group, int) else None,
-            "sampleSize": sample_size if isinstance(sample_size, int) else None,
-        },
+        "sampling": block,
     }
 
 
@@ -1031,7 +1069,8 @@ def main() -> None:
         default=None,
         metavar="PATH",
         help=(
-            "Fill this task's stratified cells from persona_strategy.json. Writes "
+            "Fill this task's persona_strategy.json (filters, allocation, and "
+            "declared mix / portions). Writes "
             f"persona/datasets/{DEFAULT_POOL_PREFIX}-strategy-<task>/ "
             "(listed in the Playground Dataset picker)."
         ),
@@ -1146,6 +1185,18 @@ def main() -> None:
             per_cell = sampling.get("perCell")
         if sample_size is None and isinstance(sampling.get("sampleSize"), int):
             sample_size = sampling.get("sampleSize")
+        strategy_portions = sampling.get("portions")
+        if isinstance(strategy_portions, dict) and strategy_portions:
+            if not independent_marginals:
+                independent_marginals = {
+                    str(dim): dict(weights)
+                    for dim, weights in strategy_portions.items()
+                    if isinstance(weights, dict)
+                }
+            # Same as Playground Task-plan synthesize: declared mix is exact
+            # independentMarginal quotas, not population-weighted proportional.
+            if allocation in {None, "proportional"}:
+                allocation = "independentMarginal"
         strategy_meta = {
             "strategy_path": str(strategy_path.relative_to(REPO_ROOT)),
             "dimensionFilters": filters,
@@ -1155,6 +1206,7 @@ def main() -> None:
                 "allocation": allocation,
                 "perCell": per_cell,
                 "sampleSize": sample_size,
+                "portions": strategy_portions if isinstance(strategy_portions, dict) else None,
             },
         }
         write_independent = True

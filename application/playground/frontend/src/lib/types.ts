@@ -948,12 +948,6 @@ export interface OverlayDimension {
   values: string[];
 }
 
-export interface OverlayContrastArm {
-  overlayId: string;
-  baseValue: string;
-  values: string[];
-}
-
 export interface PersonaPoolCatalog {
   pool: string;
   count: number;
@@ -1041,14 +1035,12 @@ export interface PersonaPoolGenerateResult {
   personaIds: string[];
   seed: number;
   parentPool?: string;
-  contrastStamps?: Record<string, string>;
-  contrastPools?: PersonaPoolGenerateResult[];
 }
 
 /** NDJSON progress line from ``POST /api/persona-pool/generate?stream=1``. */
 export interface PersonaPoolGenerateProgress {
   type: "progress";
-  stage: "prepare" | "sample" | "write" | "manifest" | "done" | "contrast" | string;
+  stage: "prepare" | "sample" | "write" | "manifest" | "done" | string;
   /** Progress within the current dataset (0..1). */
   ratio: number;
   label: string;
@@ -1056,9 +1048,7 @@ export interface PersonaPoolGenerateProgress {
   total?: number;
   /** 0-based index of the dataset being written in this generate call. */
   datasetIndex?: number;
-  /** How many datasets this generate call will write (base + contrast arms). */
   datasetTotal?: number;
-  /** Display name for the dataset bar (e.g. Contrast · Brand=Low). */
   datasetLabel?: string;
 }
 

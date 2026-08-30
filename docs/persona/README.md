@@ -253,7 +253,9 @@ Schema `--filter` values pin the DAG; overlay values are applied after sampling.
 After Generate, Dataset switches to the new pool (it does **not** auto-select
 the draw as the launch cohort). If **Task default** is on and Pull cannot cover
 `persona_strategy.json`, **Synthesize to fill this task** (CLI: `--strategy`)
-fills those cells.
+fills those cells, including any declared mix (`sampling.portions` or weighted
+`dimensionFilters`). `--task … --per-cell` is a different path: grounding.toml
+probe cells only.
 
 ### Playground Generation (Independent / Contrast)
 
@@ -307,9 +309,16 @@ uv run python persona/scripts/generate_dev_personas.py \
   --contrast brand_trust=High
 ```
 
-Also useful: `--strategy`, `--task … --per-cell`, `--stratify`,
+Also useful: `--strategy` (task `persona_strategy.json`, including target mix),
+`--task … --per-cell` (grounding.toml cells), `--stratify`,
 `--contrast-dim` / `--contrast-value` (single-arm shorthand). Defaults:
 `--count` 2000 (max 5000).
+
+```bash
+# Task-plan fill (honors persona_strategy.json mix)
+uv run python persona/scripts/generate_dev_personas.py \
+  --strategy application/tasks/example-survey_product-feedback
+```
 
 ### Job Generation
 Create a Matraix Playground job YAML from a task and persona pool by passing an
