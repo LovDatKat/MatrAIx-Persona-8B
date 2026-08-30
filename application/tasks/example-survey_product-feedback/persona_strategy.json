@@ -11,20 +11,18 @@
       "25-34",
       "35-44"
     ],
-    "economic_motivation": [
-      "Cost-sensitive",
-      "Value-driven",
-      "Premium-seeking",
-      "Indifferent"
-    ]
+    "economic_motivation": {
+      "Cost-sensitive": 0.4,
+      "Value-driven": 0.35,
+      "Premium-seeking": 0.25
+    }
   },
   "sampling": {
     "mode": "stratified",
     "fields": [
-      "economic_motivation",
-      "life_stage"
+      "economic_motivation"
     ],
-    "allocation": "equalTotal",
-    "sampleSize": 12
+    "allocation": "proportional",
+    "sampleSize": 20
   }
 }

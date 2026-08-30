@@ -1664,3 +1664,35 @@ def test_job_aggregation_artifact_is_fresh_rejects_bad_payload(tmp_path: Path) -
     assert not job_aggregation_artifact_is_fresh(
         job_dir, read_job_aggregation_artifact(job_dir)
     )
+
+
+def test_overlay_dimension_labels_from_pool_manifest(tmp_path: Path) -> None:
+    from backend.service.job_aggregation import (
+        _humanize_persona_dimension,
+        _overlay_labels_from_persona_cache,
+    )
+
+    pool = tmp_path / "persona" / "datasets" / "overlay-pool"
+    pool.mkdir(parents=True)
+    (pool / "manifest.json").write_text(
+        json.dumps(
+            {
+                "overlay_dimensions": [
+                    {
+                        "id": "study_trust",
+                        "label": "品牌信任",
+                        "values": ["Low", "High"],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    rel = "persona/datasets/overlay-pool/persona_0001.yaml"
+    labels = _overlay_labels_from_persona_cache(
+        repo_root=tmp_path, persona_paths=[rel]
+    )
+    assert labels["study_trust"] == "品牌信任"
+    assert (
+        _humanize_persona_dimension("study_trust", labels=labels) == "品牌信任"
+    )
