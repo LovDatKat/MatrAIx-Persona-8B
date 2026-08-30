@@ -13,7 +13,6 @@ import { api, ApiError } from "@/lib/api";
 import {
   PERSONA_BENCH_POOL,
   PERSONA_CARD_PREVIEW_LIMIT,
-  PERSONA_GENERATE_COUNT_DEFAULT,
   PERSONA_GENERATE_COUNT_MAX,
   PERSONA_PRODUCTION_1M_POOL,
   PERSONA_SAMPLE_SIZE_MAX_DEV,
@@ -181,8 +180,11 @@ function isGeneratedDevPool(pool: string): boolean {
   return /(?:^|\/)generated-persona-dev-/.test(pool);
 }
 
+/** Custom Random count — small enough to try without a 2k synth. */
+const CUSTOM_GENERATE_COUNT_DEFAULT = 10;
+
 function clampGenerateCount(value: number): number {
-  if (!Number.isFinite(value)) return PERSONA_GENERATE_COUNT_DEFAULT;
+  if (!Number.isFinite(value)) return CUSTOM_GENERATE_COUNT_DEFAULT;
   return Math.min(PERSONA_GENERATE_COUNT_MAX, Math.max(1, Math.round(value)));
 }
 
@@ -950,7 +952,7 @@ export function PersonaSamplingRail({
   const [genMode, setGenMode] = useState<"random" | "perCell" | "total">(
     "random",
   );
-  const [genCount, setGenCount] = useState(PERSONA_GENERATE_COUNT_DEFAULT);
+  const [genCount, setGenCount] = useState(CUSTOM_GENERATE_COUNT_DEFAULT);
   const [genCountDraft, setGenCountDraft] = useState<string | null>(null);
   const [genSeed, setGenSeed] = useState(42);
   const [genPerCell, setGenPerCell] = useState(2);
@@ -1360,7 +1362,7 @@ export function PersonaSamplingRail({
   );
   const resetCustomGeneration = useCallback(() => {
     setGenMode("random");
-    setGenCount(PERSONA_GENERATE_COUNT_DEFAULT);
+    setGenCount(CUSTOM_GENERATE_COUNT_DEFAULT);
     setGenCountDraft(null);
     setGenPerCell(2);
     setGenSampleSize(32);
