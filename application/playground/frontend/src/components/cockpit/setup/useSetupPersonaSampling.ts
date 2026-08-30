@@ -7,6 +7,7 @@ import { useUrlState } from "@/lib/useUrlState";
 import type { HarborCockpitTaskKind } from "@/lib/harborCockpitMappers";
 import type { ConfigOptionsResponse, PlaygroundPersona, TaskPersonaStrategy } from "@/lib/types";
 import { PERSONA_BENCH_POOL } from "@/lib/types";
+import { personaModelProviderLabel } from "@/lib/personaAgentCatalog";
 
 import {
   defaultPersonaSetup,
@@ -42,17 +43,6 @@ function applyPersonaHandoffToSetup(
     useTaskDefaultStrategy: false,
     taskDefaultStrategyDismissed: true,
   };
-}
-
-const PERSONA_MODEL_PROVIDER_LABELS: Record<string, string> = {
-  anthropic: "Anthropic",
-  dashscope: "DashScope",
-  openai: "OpenAI",
-  openrouter: "OpenRouter",
-};
-
-function personaModelProviderLabel(modelId: string): string | undefined {
-  return PERSONA_MODEL_PROVIDER_LABELS[modelId.split("/", 1)[0]];
 }
 
 export function useSetupPersonaSampling(
@@ -425,13 +415,12 @@ export function useSetupPersonaSampling(
     samplingMode !== "single" || selectedCount > 1 || selectedPersonaIds.length > 1;
 
   const personaModelKnob = options?.knobs.find((k) => k.key === "personaModel");
-  // Provider meta only in the open menu (closed trigger stays label-only).
-  // Omit summary — long descriptions clutter the compact Persona rail.
+  // Grouped by provider in the open menu. Omit summary — descriptions clutter the rail.
   const personaModelOptions =
     personaModelKnob?.options.map((o) => ({
       value: o.value,
       label: o.label,
-      meta: personaModelProviderLabel(o.value),
+      group: personaModelProviderLabel(o.value),
     })) ?? [{ value: personaModel, label: personaModel }];
 
   const togglePersona = useCallback(
