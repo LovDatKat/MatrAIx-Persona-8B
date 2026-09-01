@@ -1218,7 +1218,7 @@ def create_app(catalog_path: Optional[str] = None) -> FastAPI:
                 )
 
                 strategy = get_task_persona_strategy(
-                    body.taskPath, repo_root=services.repo_root
+                    body.taskPath, repo_root=services.harbor_jobs.repo_root
                 )
                 sampling = (
                     strategy.get("sampling")
