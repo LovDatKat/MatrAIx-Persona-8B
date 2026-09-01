@@ -261,6 +261,13 @@ export function SurveyEvalCockpit({
     clearLaunchError,
     canLaunchCohort,
     launchBatch,
+    requestConfigAnotherRun,
+    confirmConfigAnotherRun,
+    cancelConfigAnotherRun,
+    configAnotherOpen,
+    queuedJobName,
+    clearQueuedJob,
+    batchLaunching,
   } = useCockpitLaunch(options, "survey", setupTaskPath, isActive);
   const setupLocked = phase !== "idle" || Boolean(batchJobName);
   const visiblePersonaIds = setupLocked && batchPersonaIds.length > 0 ? batchPersonaIds : selectedPersonaIds;
@@ -408,8 +415,15 @@ export function SurveyEvalCockpit({
   const handleNewRun = useCallback(() => {
     reset();
     clearBatch();
+    clearQueuedJob();
     clearLaunchError();
-  }, [reset, clearBatch, clearLaunchError]);
+  }, [reset, clearBatch, clearQueuedJob, clearLaunchError]);
+
+  const handleConfirmConfigAnotherRun = useCallback(() => {
+    reset();
+    confirmConfigAnotherRun();
+    setSelectedTaskId("");
+  }, [reset, confirmConfigAnotherRun]);
 
   const { onCancelRun, cancelRunBusy } = useCockpitRunCancel({
     batchJobName,
@@ -482,6 +496,7 @@ export function SurveyEvalCockpit({
     batchError,
     phase,
     batchCancelled,
+    batchLaunching,
   );
   const runProgressPct = batchJobName
     ? computeBatchProgressPct(batchJobName, batchCompletedTrials, expectedTrialCount)
@@ -618,10 +633,20 @@ export function SurveyEvalCockpit({
             retryError
           }
           onNewRun={showLiveCenter ? handleNewRun : undefined}
+          onConfigAnotherRun={
+            batchJobName
+              ? batchComplete || batchCancelled
+                ? handleConfirmConfigAnotherRun
+                : requestConfigAnotherRun
+              : undefined
+          }
+          configAnotherOpen={configAnotherOpen}
+          onConfirmConfigAnother={handleConfirmConfigAnotherRun}
+          onCancelConfigAnother={cancelConfigAnotherRun}
           onCancelRun={onCancelRun}
           cancelRunBusy={cancelRunBusy}
           onViewJob={
-            batchJobName && batchComplete && onOpenHarborJob
+            batchJobName && onOpenHarborJob
               ? () => onOpenHarborJob(batchJobName)
               : !batchJobName && harborJobName && harborTrialName && onOpenHarborTrial
                 ? () => onOpenHarborTrial(harborJobName, harborTrialName)
@@ -634,6 +659,13 @@ export function SurveyEvalCockpit({
           }
           failedCount={failedTrials}
           retryBusy={retryBusy}
+          queuedJobName={queuedJobName}
+          onWatchQueued={
+            queuedJobName && onOpenHarborJob
+              ? () => onOpenHarborJob(queuedJobName)
+              : undefined
+          }
+          onDismissQueued={clearQueuedJob}
         />
       }
       right={

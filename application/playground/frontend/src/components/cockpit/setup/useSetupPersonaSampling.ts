@@ -121,6 +121,20 @@ export function useSetupPersonaSampling(
     setTaskDefaultStrategyDismissed(record.taskDefaultStrategyDismissed === true);
   }, []);
 
+  const resetWorkspaceSetup = useCallback(() => {
+    const defaults = defaultPersonaSetup(fallbackPersonaModel);
+    const next: CockpitPersonaSetupRecord = {
+      ...defaults,
+      personaModel,
+      useTaskDefaultStrategy: false,
+      taskDefaultStrategyDismissed: true,
+    };
+    applySetupRecord(next);
+    if (normalizedPath) {
+      writeCockpitPersonaSetup(taskKind, next, normalizedPath);
+    }
+  }, [applySetupRecord, fallbackPersonaModel, normalizedPath, personaModel, taskKind]);
+
   const setStratifiedAllocation = useCallback((next: StratifiedAllocation) => {
     setStratifiedAllocationState(next);
     if (next === "perCell") {
@@ -484,5 +498,6 @@ export function useSetupPersonaSampling(
     taskPersonaStrategy,
     useTaskDefaultStrategy: hasTaskStrategy && useTaskDefaultStrategy,
     setUseTaskDefaultStrategy,
+    resetWorkspaceSetup,
   };
 }

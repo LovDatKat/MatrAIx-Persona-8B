@@ -46,7 +46,6 @@ import {
   formatBatchProgressLabel,
   resolveRunLaunchPhase,
 } from "./setup/useCockpitBatchJob";
-import { readCockpitBatch } from "./setup/cockpitBatchStorage";
 import { useCockpitLaunch } from "./setup/useCockpitLaunch";
 import { useCockpitRunCancel } from "./setup/useCockpitRunCancel";
 import { useCockpitSetupLock } from "./setup/useCockpitSetupLock";
@@ -200,12 +199,11 @@ export function PlaygroundCockpit({
   const setTaskType = useCallback(
     (next: PlaygroundTaskType) => {
       setTaskTypeInternal(next);
-      const batch = readCockpitBatch(next);
       setUrlState({
         pgTask: next,
         cockpitJob: null,
         cockpitTrial: null,
-        cockpitBatch: batch?.jobName ?? null,
+        cockpitBatch: null,
       });
     },
     [setUrlState],
@@ -373,6 +371,13 @@ function ChatbotEvalCockpit({
     clearLaunchError,
     canLaunchCohort,
     launchBatch,
+    requestConfigAnotherRun,
+    confirmConfigAnotherRun,
+    cancelConfigAnotherRun,
+    configAnotherOpen,
+    queuedJobName,
+    clearQueuedJob,
+    batchLaunching,
   } = useCockpitLaunch(options, "chatbot", setupTaskPath, isActive);
   const pipelinePersonaModelLabel = useMemo(
     () => personaModelPipelineLabel(personaModel, personaModelOptions),
@@ -607,10 +612,19 @@ function ChatbotEvalCockpit({
   const handleNewRun = useCallback(() => {
     reset();
     clearBatch();
+    clearQueuedJob();
     clearLaunchError();
     setFocusedTurnIndex(null);
     setExpandedTurns(new Set());
-  }, [reset, clearBatch, clearLaunchError]);
+  }, [reset, clearBatch, clearQueuedJob, clearLaunchError]);
+
+  const handleConfirmConfigAnotherRun = useCallback(() => {
+    reset();
+    confirmConfigAnotherRun();
+    setSelectedTaskId("");
+    setFocusedTurnIndex(null);
+    setExpandedTurns(new Set());
+  }, [reset, confirmConfigAnotherRun]);
 
   const { onCancelRun, cancelRunBusy } = useCockpitRunCancel({
     batchJobName,
@@ -778,6 +792,7 @@ function ChatbotEvalCockpit({
     batchError,
     phase,
     batchCancelled,
+    batchLaunching,
   );
 
   const runProgressPct = batchJobName
@@ -942,10 +957,20 @@ function ChatbotEvalCockpit({
                 : undefined
             }
             onNewRun={showLiveCenter ? handleNewRun : undefined}
+            onConfigAnotherRun={
+              batchJobName
+                ? batchComplete || batchCancelled
+                  ? handleConfirmConfigAnotherRun
+                  : requestConfigAnotherRun
+                : undefined
+            }
+            configAnotherOpen={configAnotherOpen}
+            onConfirmConfigAnother={handleConfirmConfigAnotherRun}
+            onCancelConfigAnother={cancelConfigAnotherRun}
             onCancelRun={onCancelRun}
             cancelRunBusy={cancelRunBusy}
             onViewJob={
-              batchJobName && batchComplete && onOpenHarborJob
+              batchJobName && onOpenHarborJob
                 ? () => onOpenHarborJob(batchJobName)
                 : !batchJobName && harborJobName && harborTrialName && onOpenHarborTrial
                   ? () => onOpenHarborTrial(harborJobName, harborTrialName)
@@ -958,6 +983,13 @@ function ChatbotEvalCockpit({
             }
             failedCount={failedTrials}
             retryBusy={retryBusy}
+            queuedJobName={queuedJobName}
+            onWatchQueued={
+              queuedJobName && onOpenHarborJob
+                ? () => onOpenHarborJob(queuedJobName)
+                : undefined
+            }
+            onDismissQueued={clearQueuedJob}
           />
         </div>
       }

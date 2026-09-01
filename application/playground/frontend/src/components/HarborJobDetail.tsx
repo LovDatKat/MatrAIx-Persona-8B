@@ -49,6 +49,7 @@ import {
   type TaskDocTabId,
 } from "./cockpit/setup/taskDetailSections";
 import { FOCUS_RING, Sym } from "./cockpit/cockpitShared";
+import { HarborJobLiveRoster } from "./cockpit/setup/HarborJobLiveRoster";
 import {
   CockpitSelect,
   type CockpitSelectOption,
@@ -5757,6 +5758,15 @@ export function HarborJobDetail({ jobName, onBack, onOpenTrial }: HarborJobDetai
   const job = query.data;
   const launch = job?.launch;
   const trials = job?.trials ?? [];
+  const jobFinished = Boolean(
+    job?.result &&
+      typeof job.result === "object" &&
+      (job.result as { finished_at?: unknown }).finished_at,
+  );
+  const liveLaunch =
+    launch?.status === "running" || launch?.status === "queued";
+  const jobInFlight =
+    liveLaunch || (!jobFinished && trials.some((trial) => !trial.completed));
 
   const aggregationQuery = useQuery({
     queryKey: ["harbor-job-aggregation", jobName],
@@ -5789,16 +5799,11 @@ export function HarborJobDetail({ jobName, onBack, onOpenTrial }: HarborJobDetai
     [jobName, job, aggregation, t],
   );
 
-  const progress = useMemo(() => {
-    const done = trials.filter((trial) => trial.completed && trial.succeeded !== false && !trial.error).length;
-    const failed = trials.filter((trial) => trial.error || trial.succeeded === false).length;
-    const running = trials.filter((trial) => !trial.completed).length;
-    return { done, failed, running, total: trials.length };
-  }, [trials]);
-
-  const [view, setView] = useState<"report" | "runs">("report");
+  type JobDetailView = "status" | "report" | "runs";
+  const [view, setView] = useState<JobDetailView | null>(null);
   const hasReport = Boolean(aggregation) || aggregationLoading;
-  const activeView: "report" | "runs" = view === "report" && !hasReport ? "runs" : view;
+  const defaultView: JobDetailView = jobInFlight || !hasReport ? "status" : "report";
+  const activeView: JobDetailView = view ?? defaultView;
 
   const refreshAll = () => {
     void query.refetch();
@@ -5870,49 +5875,43 @@ export function HarborJobDetail({ jobName, onBack, onOpenTrial }: HarborJobDetai
             </div>
           )}
 
-          {progress.total > 0 && !aggregation && (
-            <StudioGlassPanel className="mb-5 flex flex-wrap items-center gap-3 px-4 py-3 text-[14px] text-text-variant">
-              <span className="font-mono text-text-main">
-                {t("reports.page.trialsFinished", { done: progress.done, total: progress.total })}
-              </span>
-              {progress.running > 0 && (
-                <span className="inline-flex items-center gap-1 text-warn">
-                  <span className="h-1.5 w-1.5 rounded-full bg-warn animate-pulse" />
-                  {progress.running} {t("reports.page.running")}
-                </span>
-              )}
-              {progress.failed > 0 && (
-                <span className="inline-flex items-center gap-1 text-danger">
-                  <span className="h-1.5 w-1.5 rounded-full bg-danger" />
-                  {progress.failed} {t("reports.page.failed")}
-                </span>
-              )}
-            </StudioGlassPanel>
-          )}
-
-          {hasReport ? (
-            <div className="mb-4 flex items-center gap-2.5">
-              <span className="text-[12px] font-medium uppercase tracking-wide text-text-dim">
-                {t("reports.page.view")}
-              </span>
-              <div
-                className="inline-flex gap-1 rounded-xl border border-outline/50 bg-surface/40 p-1 shadow-sm"
-                role="tablist"
-              >
-                <ViewSwitchTab
-                  active={activeView === "report"}
-                  onClick={() => setView("report")}
-                  icon="analytics"
-                  label={t("reports.page.reportTab")}
-                />
-                <ViewSwitchTab
-                  active={activeView === "runs"}
-                  onClick={() => setView("runs")}
-                  icon="groups"
-                  label={t("reports.page.individualRuns", { count: trials.length })}
-                />
-              </div>
+          <div className="mb-4 flex items-center gap-2.5">
+            <span className="text-[12px] font-medium uppercase tracking-wide text-text-dim">
+              {t("reports.page.view")}
+            </span>
+            <div
+              className="inline-flex gap-1 rounded-xl border border-outline/50 bg-surface/40 p-1 shadow-sm"
+              role="tablist"
+            >
+              <ViewSwitchTab
+                active={activeView === "status"}
+                onClick={() => setView("status")}
+                icon="grid_view"
+                label={t("reports.page.runStatusTab")}
+              />
+              <ViewSwitchTab
+                active={activeView === "report"}
+                onClick={() => setView("report")}
+                icon="analytics"
+                label={t("reports.page.reportTab")}
+              />
+              <ViewSwitchTab
+                active={activeView === "runs"}
+                onClick={() => setView("runs")}
+                icon="groups"
+                label={t("reports.page.individualRuns", { count: trials.length })}
+              />
             </div>
+          </div>
+
+          {activeView === "status" ? (
+            <StudioGlassPanel className="mb-5 flex h-[min(48rem,calc(100vh-18rem))] min-h-[20rem] flex-col overflow-hidden p-3">
+              <HarborJobLiveRoster
+                jobName={jobName}
+                config={job?.config}
+                onOpenTrial={onOpenTrial}
+              />
+            </StudioGlassPanel>
           ) : null}
 
           {activeView === "report" && aggregationLoading ? (

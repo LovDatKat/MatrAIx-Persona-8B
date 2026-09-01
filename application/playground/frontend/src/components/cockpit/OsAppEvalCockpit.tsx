@@ -196,6 +196,13 @@ export function OsAppEvalCockpit({
     clearLaunchError,
     canLaunchCohort,
     launchBatch,
+    requestConfigAnotherRun,
+    confirmConfigAnotherRun,
+    cancelConfigAnotherRun,
+    configAnotherOpen,
+    queuedJobName,
+    clearQueuedJob,
+    batchLaunching,
   } = useCockpitLaunch(options, "os-app", setupTaskPath, isActive);
 
 
@@ -327,8 +334,15 @@ export function OsAppEvalCockpit({
   const handleNewRun = useCallback(() => {
     reset();
     clearBatch();
+    clearQueuedJob();
     clearLaunchError();
-  }, [reset, clearBatch, clearLaunchError]);
+  }, [reset, clearBatch, clearQueuedJob, clearLaunchError]);
+
+  const handleConfirmConfigAnotherRun = useCallback(() => {
+    reset();
+    confirmConfigAnotherRun();
+    setTaskId("");
+  }, [reset, confirmConfigAnotherRun]);
 
   const { onCancelRun, cancelRunBusy } = useCockpitRunCancel({
     batchJobName,
@@ -392,6 +406,7 @@ export function OsAppEvalCockpit({
     batchError,
     phase,
     batchCancelled,
+    batchLaunching,
   );
   const runProgressPct = batchJobName
     ? computeBatchProgressPct(batchJobName, batchCompletedTrials, expectedTrialCount)
@@ -529,10 +544,20 @@ export function OsAppEvalCockpit({
             (failed && !batchJobName ? null : displayError)
           }
           onNewRun={showLiveCenter ? handleNewRun : undefined}
+          onConfigAnotherRun={
+            batchJobName
+              ? batchComplete || batchCancelled
+                ? handleConfirmConfigAnotherRun
+                : requestConfigAnotherRun
+              : undefined
+          }
+          configAnotherOpen={configAnotherOpen}
+          onConfirmConfigAnother={handleConfirmConfigAnotherRun}
+          onCancelConfigAnother={cancelConfigAnotherRun}
           onCancelRun={onCancelRun}
           cancelRunBusy={cancelRunBusy}
           onViewJob={
-            batchJobName && batchComplete && onOpenHarborJob
+            batchJobName && onOpenHarborJob
               ? () => onOpenHarborJob(batchJobName)
               : !batchJobName && harborJobName && harborTrialName && onOpenHarborTrial
                 ? () => onOpenHarborTrial(harborJobName, harborTrialName)
@@ -545,6 +570,13 @@ export function OsAppEvalCockpit({
           }
           failedCount={failedTrials}
           retryBusy={retryBusy}
+          queuedJobName={queuedJobName}
+          onWatchQueued={
+            queuedJobName && onOpenHarborJob
+              ? () => onOpenHarborJob(queuedJobName)
+              : undefined
+          }
+          onDismissQueued={clearQueuedJob}
         />
       }
       right={

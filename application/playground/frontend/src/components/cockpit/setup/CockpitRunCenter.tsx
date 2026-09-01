@@ -33,6 +33,13 @@ export interface CockpitRunCenterProps {
   onRetryFailed?: () => void;
   failedCount?: number;
   retryBusy?: boolean;
+  onConfigAnotherRun?: () => void;
+  configAnotherOpen?: boolean;
+  onConfirmConfigAnother?: () => void;
+  onCancelConfigAnother?: () => void;
+  queuedJobName?: string | null;
+  onWatchQueued?: () => void;
+  onDismissQueued?: () => void;
 }
 
 /** Center column: pipeline (idle) → live stage or batch grid (running) + progress launch bar. */
@@ -64,6 +71,13 @@ export function CockpitRunCenter({
   onRetryFailed,
   failedCount,
   retryBusy,
+  onConfigAnotherRun,
+  configAnotherOpen,
+  onConfirmConfigAnother,
+  onCancelConfigAnother,
+  queuedJobName,
+  onWatchQueued,
+  onDismissQueued,
 }: CockpitRunCenterProps) {
   return (
     <div className="flex h-full min-h-0 w-full flex-col gap-2 overflow-hidden">
@@ -100,6 +114,13 @@ export function CockpitRunCenter({
         onRetryFailed={onRetryFailed}
         failedCount={failedCount}
         retryBusy={retryBusy}
+        onConfigAnotherRun={onConfigAnotherRun}
+        configAnotherOpen={configAnotherOpen}
+        onConfirmConfigAnother={onConfirmConfigAnother}
+        onCancelConfigAnother={onCancelConfigAnother}
+        queuedJobName={queuedJobName}
+        onWatchQueued={onWatchQueued}
+        onDismissQueued={onDismissQueued}
       />
     </div>
   );
