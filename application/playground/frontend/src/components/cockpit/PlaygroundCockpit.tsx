@@ -375,8 +375,6 @@ function ChatbotEvalCockpit({
     confirmConfigAnotherRun,
     cancelConfigAnotherRun,
     configAnotherOpen,
-    queuedJobName,
-    clearQueuedJob,
     batchLaunching,
   } = useCockpitLaunch(options, "chatbot", setupTaskPath, isActive);
   const pipelinePersonaModelLabel = useMemo(
@@ -612,11 +610,10 @@ function ChatbotEvalCockpit({
   const handleNewRun = useCallback(() => {
     reset();
     clearBatch();
-    clearQueuedJob();
     clearLaunchError();
     setFocusedTurnIndex(null);
     setExpandedTurns(new Set());
-  }, [reset, clearBatch, clearQueuedJob, clearLaunchError]);
+  }, [reset, clearBatch, clearLaunchError]);
 
   const handleConfirmConfigAnotherRun = useCallback(() => {
     reset();
@@ -983,13 +980,6 @@ function ChatbotEvalCockpit({
             }
             failedCount={failedTrials}
             retryBusy={retryBusy}
-            queuedJobName={queuedJobName}
-            onWatchQueued={
-              queuedJobName && onOpenHarborJob
-                ? () => onOpenHarborJob(queuedJobName)
-                : undefined
-            }
-            onDismissQueued={clearQueuedJob}
           />
         </div>
       }

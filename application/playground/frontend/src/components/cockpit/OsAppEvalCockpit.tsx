@@ -200,8 +200,6 @@ export function OsAppEvalCockpit({
     confirmConfigAnotherRun,
     cancelConfigAnotherRun,
     configAnotherOpen,
-    queuedJobName,
-    clearQueuedJob,
     batchLaunching,
   } = useCockpitLaunch(options, "os-app", setupTaskPath, isActive);
 
@@ -334,9 +332,8 @@ export function OsAppEvalCockpit({
   const handleNewRun = useCallback(() => {
     reset();
     clearBatch();
-    clearQueuedJob();
     clearLaunchError();
-  }, [reset, clearBatch, clearQueuedJob, clearLaunchError]);
+  }, [reset, clearBatch, clearLaunchError]);
 
   const handleConfirmConfigAnotherRun = useCallback(() => {
     reset();
@@ -570,13 +567,6 @@ export function OsAppEvalCockpit({
           }
           failedCount={failedTrials}
           retryBusy={retryBusy}
-          queuedJobName={queuedJobName}
-          onWatchQueued={
-            queuedJobName && onOpenHarborJob
-              ? () => onOpenHarborJob(queuedJobName)
-              : undefined
-          }
-          onDismissQueued={clearQueuedJob}
         />
       }
       right={

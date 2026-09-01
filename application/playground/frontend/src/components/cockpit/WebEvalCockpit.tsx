@@ -221,8 +221,6 @@ export function WebEvalCockpit({
     confirmConfigAnotherRun,
     cancelConfigAnotherRun,
     configAnotherOpen,
-    queuedJobName,
-    clearQueuedJob,
     batchLaunching,
   } = useCockpitLaunch(options, "web", setupTaskPath, isActive);
 
@@ -373,9 +371,8 @@ export function WebEvalCockpit({
   const handleNewRun = useCallback(() => {
     reset();
     clearBatch();
-    clearQueuedJob();
     clearLaunchError();
-  }, [reset, clearBatch, clearQueuedJob, clearLaunchError]);
+  }, [reset, clearBatch, clearLaunchError]);
 
   const handleConfirmConfigAnotherRun = useCallback(() => {
     reset();
@@ -616,13 +613,6 @@ export function WebEvalCockpit({
           }
           failedCount={failedTrials}
           retryBusy={retryBusy}
-          queuedJobName={queuedJobName}
-          onWatchQueued={
-            queuedJobName && onOpenHarborJob
-              ? () => onOpenHarborJob(queuedJobName)
-              : undefined
-          }
-          onDismissQueued={clearQueuedJob}
         />
       }
       right={

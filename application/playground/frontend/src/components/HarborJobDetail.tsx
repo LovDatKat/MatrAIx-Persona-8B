@@ -5929,6 +5929,18 @@ export function HarborJobDetail({ jobName, onBack, onOpenTrial }: HarborJobDetai
             />
           ) : null}
 
+          {activeView === "report" && !aggregation && !aggregationLoading ? (
+            <StudioGlassPanel className="mb-4 px-4 py-8 text-center text-[15px] text-text-variant">
+              {aggregationQuery.isError
+                ? aggregationQuery.error instanceof ApiError
+                  ? aggregationQuery.error.message
+                  : t("reports.page.reportFailed")
+                : jobInFlight
+                  ? t("reports.page.reportPending")
+                  : t("reports.page.reportUnavailable")}
+            </StudioGlassPanel>
+          ) : null}
+
           {activeView === "runs" ? (
           <StudioGlassPanel className="overflow-hidden rounded-xl">
             <div className="flex items-center gap-2 border-b border-outline/40 px-4 py-3">

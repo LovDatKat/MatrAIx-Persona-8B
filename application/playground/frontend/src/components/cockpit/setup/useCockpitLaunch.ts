@@ -55,7 +55,6 @@ export function useCockpitLaunch(
   );
   const queryClient = useQueryClient();
   const [launchError, setLaunchError] = useState<string | null>(null);
-  const [queuedJobName, setQueuedJobName] = useState<string | null>(null);
   const [configAnotherOpen, setConfigAnotherOpen] = useState(false);
   const [batchLaunching, setBatchLaunching] = useState(false);
 
@@ -143,7 +142,6 @@ export function useCockpitLaunch(
     }
     clearBatch();
     sampling.resetWorkspaceSetup();
-    setQueuedJobName(null);
     setLaunchError(null);
     setConfigAnotherOpen(false);
   }, [batchJobName, clearBatch, queryClient, sampling.resetWorkspaceSetup]);
@@ -151,7 +149,6 @@ export function useCockpitLaunch(
   const requestConfigAnotherRun = useCallback(() => setConfigAnotherOpen(true), []);
   const cancelConfigAnotherRun = useCallback(() => setConfigAnotherOpen(false), []);
   const clearLaunchError = useCallback(() => setLaunchError(null), []);
-  const clearQueuedJob = useCallback(() => setQueuedJobName(null), []);
 
   return {
     sampling,
@@ -165,8 +162,6 @@ export function useCockpitLaunch(
     confirmConfigAnotherRun,
     cancelConfigAnotherRun,
     configAnotherOpen,
-    queuedJobName,
-    clearQueuedJob,
     batchLaunching,
   };
 }

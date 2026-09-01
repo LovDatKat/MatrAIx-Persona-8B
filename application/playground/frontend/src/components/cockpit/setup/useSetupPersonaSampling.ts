@@ -122,18 +122,28 @@ export function useSetupPersonaSampling(
   }, []);
 
   const resetWorkspaceSetup = useCallback(() => {
-    const defaults = defaultPersonaSetup(fallbackPersonaModel);
-    const next: CockpitPersonaSetupRecord = {
-      ...defaults,
+    const strategy = strategyQuery.data ?? taskPersonaStrategy;
+    const base: CockpitPersonaSetupRecord = {
+      ...defaultPersonaSetup(fallbackPersonaModel),
       personaModel,
-      useTaskDefaultStrategy: false,
-      taskDefaultStrategyDismissed: true,
     };
+    const next = strategy
+      ? setupFromPersonaStrategy(strategy, fallbackPersonaModel, base)
+      : { ...base, useTaskDefaultStrategy: false, taskDefaultStrategyDismissed: false };
     applySetupRecord(next);
+    setTaskPersonaStrategy(strategy);
     if (normalizedPath) {
       writeCockpitPersonaSetup(taskKind, next, normalizedPath);
     }
-  }, [applySetupRecord, fallbackPersonaModel, normalizedPath, personaModel, taskKind]);
+  }, [
+    applySetupRecord,
+    fallbackPersonaModel,
+    normalizedPath,
+    personaModel,
+    strategyQuery.data,
+    taskKind,
+    taskPersonaStrategy,
+  ]);
 
   const setStratifiedAllocation = useCallback((next: StratifiedAllocation) => {
     setStratifiedAllocationState(next);

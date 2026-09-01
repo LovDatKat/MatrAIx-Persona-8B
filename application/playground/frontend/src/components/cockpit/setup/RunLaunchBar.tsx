@@ -37,10 +37,6 @@ export interface RunLaunchBarProps {
   configAnotherOpen?: boolean;
   onConfirmConfigAnother?: () => void;
   onCancelConfigAnother?: () => void;
-  /** Last batch sent to the background — cockpit is free to launch another. */
-  queuedJobName?: string | null;
-  onWatchQueued?: () => void;
-  onDismissQueued?: () => void;
 }
 
 export function RunLaunchBar({
@@ -69,9 +65,6 @@ export function RunLaunchBar({
   configAnotherOpen = false,
   onConfirmConfigAnother,
   onCancelConfigAnother,
-  queuedJobName = null,
-  onWatchQueued,
-  onDismissQueued,
 }: RunLaunchBarProps) {
   const { t } = useI18n();
   const active = runPhase !== "idle";
@@ -233,33 +226,6 @@ export function RunLaunchBar({
         </div>
       ) : (
         <>
-          {queuedJobName && onWatchQueued ? (
-            <div className="mb-3 flex w-full flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/25 bg-primary/8 px-3 py-2">
-              <p className="min-w-0 flex-1 text-[13px] text-text-variant">
-                {t("eval.progress.batchSentToRuns")}
-              </p>
-              <div className="flex shrink-0 items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={onWatchQueued}
-                  className={`inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 font-display text-[13px] font-semibold text-on-primary transition hover:bg-primary-dim ${FOCUS_RING}`}
-                >
-                  <Sym name="open_in_new" size={14} />
-                  {t("eval.progress.watchInRuns")}
-                </button>
-                {onDismissQueued ? (
-                  <button
-                    type="button"
-                    onClick={onDismissQueued}
-                    aria-label={t("eval.progress.dismissQueued")}
-                    className={`inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-dim transition hover:bg-surface-high hover:text-text-main ${FOCUS_RING}`}
-                  >
-                    <Sym name="close" size={16} />
-                  </button>
-                ) : null}
-              </div>
-            </div>
-          ) : null}
           <div className="flex w-full flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <button
               type="button"

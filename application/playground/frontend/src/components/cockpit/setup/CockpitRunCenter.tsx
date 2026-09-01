@@ -37,9 +37,6 @@ export interface CockpitRunCenterProps {
   configAnotherOpen?: boolean;
   onConfirmConfigAnother?: () => void;
   onCancelConfigAnother?: () => void;
-  queuedJobName?: string | null;
-  onWatchQueued?: () => void;
-  onDismissQueued?: () => void;
 }
 
 /** Center column: pipeline (idle) → live stage or batch grid (running) + progress launch bar. */
@@ -75,9 +72,6 @@ export function CockpitRunCenter({
   configAnotherOpen,
   onConfirmConfigAnother,
   onCancelConfigAnother,
-  queuedJobName,
-  onWatchQueued,
-  onDismissQueued,
 }: CockpitRunCenterProps) {
   return (
     <div className="flex h-full min-h-0 w-full flex-col gap-2 overflow-hidden">
@@ -118,9 +112,6 @@ export function CockpitRunCenter({
         configAnotherOpen={configAnotherOpen}
         onConfirmConfigAnother={onConfirmConfigAnother}
         onCancelConfigAnother={onCancelConfigAnother}
-        queuedJobName={queuedJobName}
-        onWatchQueued={onWatchQueued}
-        onDismissQueued={onDismissQueued}
       />
     </div>
   );

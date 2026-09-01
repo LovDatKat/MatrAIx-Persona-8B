@@ -265,8 +265,6 @@ export function SurveyEvalCockpit({
     confirmConfigAnotherRun,
     cancelConfigAnotherRun,
     configAnotherOpen,
-    queuedJobName,
-    clearQueuedJob,
     batchLaunching,
   } = useCockpitLaunch(options, "survey", setupTaskPath, isActive);
   const setupLocked = phase !== "idle" || Boolean(batchJobName);
@@ -415,9 +413,8 @@ export function SurveyEvalCockpit({
   const handleNewRun = useCallback(() => {
     reset();
     clearBatch();
-    clearQueuedJob();
     clearLaunchError();
-  }, [reset, clearBatch, clearQueuedJob, clearLaunchError]);
+  }, [reset, clearBatch, clearLaunchError]);
 
   const handleConfirmConfigAnotherRun = useCallback(() => {
     reset();
@@ -659,13 +656,6 @@ export function SurveyEvalCockpit({
           }
           failedCount={failedTrials}
           retryBusy={retryBusy}
-          queuedJobName={queuedJobName}
-          onWatchQueued={
-            queuedJobName && onOpenHarborJob
-              ? () => onOpenHarborJob(queuedJobName)
-              : undefined
-          }
-          onDismissQueued={clearQueuedJob}
         />
       }
       right={
