@@ -14,6 +14,8 @@ import {
   hasStoredPersonaSetup,
   isTaskStrategyFillPool,
   readCockpitPersonaSetup,
+  resolveTaskHydrateSetup,
+  samplingModeForOperatorCohort,
   sanitizePersonaPool,
   scrubTaskStrategyFillForCustomMode,
   setupFromPersonaStrategy,
@@ -90,6 +92,23 @@ export function useSetupPersonaSampling(
   const hydratedPathRef = useRef<string | null>(null);
   const skipNextPersistRef = useRef(false);
   const handoffAppliedRef = useRef(false);
+  const incomingCohortRef = useRef({
+    personaPool,
+    selectedPersonaIds,
+    selectedCount,
+    useEntirePool,
+  });
+  incomingCohortRef.current = {
+    personaPool,
+    selectedPersonaIds,
+    selectedCount,
+    useEntirePool,
+  };
+  const lastDurablePersonaPoolRef = useRef(
+    isTaskStrategyFillPool(initial.personaPool)
+      ? PERSONA_BENCH_POOL
+      : sanitizePersonaPool(initial.personaPool),
+  );
   const { state: urlState, setState: setUrlState } = useUrlState();
 
   const strategyQuery = useQuery({
@@ -178,28 +197,53 @@ export function useSetupPersonaSampling(
         resetToTaskStrategy();
         return;
       }
-      // Explicit opt-out: leave the task-fill / strategy cohort and return to
-      // the stock Quick-pick sandbox (dev-sample + empty selection).
+      // Explicit opt-out: unlock filters. Keep Dataset + selection unless the
+      // current pool is a task-fill generate cohort.
       const defaults = defaultPersonaSetup(fallbackPersonaModel);
       setTaskDefaultStrategyDismissed(true);
       setUseTaskDefaultStrategyState(false);
-      setPersonaPool(PERSONA_BENCH_POOL);
-      setSelectedPersonaIds([]);
-      setSelectedCount(0);
-      setUseEntirePool(false);
-      setSamplingMode(defaults.samplingMode);
+      if (isTaskStrategyFillPool(personaPool)) {
+        setPersonaPool(
+          sanitizePersonaPool(lastDurablePersonaPoolRef.current) || PERSONA_BENCH_POOL,
+        );
+        setSelectedPersonaIds([]);
+        setSelectedCount(0);
+        setUseEntirePool(false);
+        setSamplingMode(defaults.samplingMode);
+      } else {
+        setSamplingMode(
+          samplingModeForOperatorCohort({
+            selectedPersonaIds,
+            selectedCount,
+            useEntirePool,
+          }),
+        );
+      }
       setGroupFilters(emptyPersonaDimensionFilters());
       setFields(defaults.fields);
       setStratifiedAllocationState(defaults.stratifiedAllocation);
       setSampleSize(defaults.sampleSize);
       setPerCell(defaults.perCell);
     },
-    [fallbackPersonaModel, resetToTaskStrategy],
+    [
+      fallbackPersonaModel,
+      personaPool,
+      resetToTaskStrategy,
+      selectedCount,
+      selectedPersonaIds,
+      useEntirePool,
+    ],
   );
 
   useEffect(() => {
     setTaskPersonaStrategy(strategyQuery.data ?? null);
   }, [strategyQuery.data]);
+
+  useEffect(() => {
+    if (!isTaskStrategyFillPool(personaPool)) {
+      lastDurablePersonaPoolRef.current = sanitizePersonaPool(personaPool);
+    }
+  }, [personaPool]);
 
   const appliedKeyRef = useRef<string | null>(null);
   useEffect(() => {
@@ -264,52 +308,15 @@ export function useSetupPersonaSampling(
 
     const stored = readCockpitPersonaSetup(taskKind, fallbackPersonaModel, path);
     const strategy = strategyQuery.data;
-    const dismissed = stored.taskDefaultStrategyDismissed === true;
-
     const hasTaskSpecificStore = hasStoredPersonaSetup(path);
-    const effectiveModel = hasTaskSpecificStore ? stored.personaModel : fallbackPersonaModel;
 
-    let applied: CockpitPersonaSetupRecord;
-    if (strategy && !dismissed) {
-      applied = setupFromPersonaStrategy(strategy, fallbackPersonaModel, {
-        ...defaultPersonaSetup(fallbackPersonaModel),
-        personaModel: effectiveModel,
-        parallelTrials: stored.parallelTrials,
-      });
-      // Keep last cohort selection across remount/navigation. Strategy apply
-      // clears preview ids intentionally for explicit "Task default" toggles,
-      // but hydrate must not wipe a selection the operator already made.
-      if (stored.selectedPersonaIds.length > 0 || stored.selectedCount > 0) {
-        applied.selectedPersonaIds = stored.selectedPersonaIds;
-        applied.selectedCount = stored.selectedCount || stored.selectedPersonaIds.length;
-        applied.useEntirePool = stored.useEntirePool;
-      }
-      // Task-fill pools belong to Task default ON — restore them with the cohort.
-      if (isTaskStrategyFillPool(stored.personaPool)) {
-        applied.personaPool = sanitizePersonaPool(stored.personaPool);
-      }
-    } else if (hasTaskSpecificStore) {
-      // Custom / dismissed: restore draft, but never sticky-restore a task-fill pool.
-      applied = scrubTaskStrategyFillForCustomMode(
-        {
-          ...stored,
-          useTaskDefaultStrategy: Boolean(strategy) && stored.useTaskDefaultStrategy,
-          taskDefaultStrategyDismissed: dismissed,
-        },
-        fallbackPersonaModel,
-      );
-    } else {
-      applied = setupFromPersonaStrategy(strategy, fallbackPersonaModel, {
-        ...defaultPersonaSetup(fallbackPersonaModel),
-        personaModel: effectiveModel,
-        parallelTrials: stored.parallelTrials,
-      });
-      if (stored.selectedPersonaIds.length > 0 || stored.selectedCount > 0) {
-        applied.selectedPersonaIds = stored.selectedPersonaIds;
-        applied.selectedCount = stored.selectedCount || stored.selectedPersonaIds.length;
-        applied.useEntirePool = stored.useEntirePool;
-      }
-    }
+    let applied = resolveTaskHydrateSetup({
+      strategy,
+      stored,
+      hasTaskSpecificStore,
+      incoming: incomingCohortRef.current,
+      fallbackPersonaModel,
+    });
 
     const handoff = isActive ? peekPersonaHandoff() : null;
     if (handoff && handoff.personaIds.length > 0) {
@@ -399,7 +406,11 @@ export function useSetupPersonaSampling(
       taskKind,
       useTaskDefaultStrategy
         ? draft
-        : scrubTaskStrategyFillForCustomMode(draft, fallbackPersonaModel),
+        : scrubTaskStrategyFillForCustomMode(
+            draft,
+            fallbackPersonaModel,
+            lastDurablePersonaPoolRef.current,
+          ),
       normalizedPath,
     );
   }, [
@@ -431,9 +442,9 @@ export function useSetupPersonaSampling(
     setPersona({
       id,
       name: `persona-${id}`,
-      source: "matraix-persona-dev-sample",
+      source: personaPool.split("/").filter(Boolean).pop() || "matraix-persona-dev-sample",
     });
-  }, [selectedPersonaIds]);
+  }, [personaPool, selectedPersonaIds]);
 
   const isBatchRun =
     samplingMode !== "single" || selectedCount > 1 || selectedPersonaIds.length > 1;
