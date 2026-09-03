@@ -1088,7 +1088,7 @@ export function PersonaSamplingRail({
       return selectedPersonaIds.map((personaId) => ({
         personaId,
         name: syntheticDisplayName(personaId),
-        source: "matraix-persona-dev-sample",
+        source: activePool.split("/").filter(Boolean).pop() || "matraix-persona-dev-sample",
         dimensions: {},
       }));
     }
@@ -1100,6 +1100,7 @@ export function PersonaSamplingRail({
     disabled,
     selectedPersonaIds,
     lockedCohortQuery.data?.personas,
+    activePool,
   ]);
 
   useEffect(() => {
@@ -1111,9 +1112,10 @@ export function PersonaSamplingRail({
     if (useTaskDefaultStrategy) setStrategySummaryOpen(true);
   }, [taskPath, useTaskDefaultStrategy]);
 
-  // Turning Task default off resets pool/selection in the parent — drop local preview too.
+  // Turning Task default on starts a fresh strategy pull — drop stale preview.
+  // Turning it off keeps Dataset + selection, so leave preview cards in place.
   useEffect(() => {
-    if (!useTaskDefaultStrategy) {
+    if (useTaskDefaultStrategy) {
       setPreviewCards([]);
       setPullError(null);
       setGenerateError(null);
@@ -1126,6 +1128,9 @@ export function PersonaSamplingRail({
         // Cohort-ref selection is not per-card editable.
         return;
       }
+      // Launch pool must match the Dataset those cards were loaded from.
+      const cardPool = panelMode === "single" ? sourcePool : activePool;
+      onPersonaPoolChange?.(cardPool);
       if (mode === "single") {
         onSelectedPersonaIdsChange(
           selectedPersonaIds.includes(personaId) ? [] : [personaId],
@@ -1140,10 +1145,14 @@ export function PersonaSamplingRail({
       onSelectedCountChange?.(next.length);
     },
     [
+      activePool,
       mode,
+      onPersonaPoolChange,
       onSelectedCountChange,
       onSelectedPersonaIdsChange,
+      panelMode,
       selectedPersonaIds,
+      sourcePool,
       useEntirePool,
     ],
   );
