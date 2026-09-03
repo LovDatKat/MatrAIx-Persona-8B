@@ -8,8 +8,9 @@ Task contents:
 - `instruction.md`, `task.toml`, `tests/`
 - `input/context.md`, `input/questionnaire.yaml`
 - `persona_strategy.json`, `reporting.json` (task root; part of the task).
-  The strategy is a **40 / 35 / 25** mix on `economic_motivation` (Form B
-  weighted filters). Playground Task-plan / Dataset Pull and
+  The strategy is a **40 / 35 / 25** mix on `economic_motivation`. Other
+  filter dims use `{value: null}` (eligible, not in the mix). Playground
+  Task-plan / Dataset Pull and
   `generate_dev_personas.py --strategy application/tasks/example-survey_product-feedback`
   all honor that mix. `--task … --per-cell` is grounding cells, not this file.
 
