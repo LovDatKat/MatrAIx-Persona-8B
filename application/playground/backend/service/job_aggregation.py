@@ -168,8 +168,9 @@ def build_job_aggregation(
     context_meta: dict[str, dict[str, Any]] = {}
     context_facet_keys: dict[str, list[str]] = {}
     reporting_cache: dict[str, dict[str, Any]] = {}
-    stratify_cache: dict[str, list[str]] = {}
+    strategy_axes_cache: dict[str, tuple[list[str], list[str]]] = {}
     stratify_fields: list[str] = []
+    filter_fields: list[str] = []
     persona_profile_cache: dict[str, dict[str, Any]] = {}
     persona_dimensions_by_id: dict[str, dict[str, Any]] = {}
     trial_count = len(trial_dirs)
@@ -216,13 +217,17 @@ def build_job_aggregation(
             repo_root=repo_root,
             cache=reporting_cache,
         )
-        for dimension in _load_task_stratify_fields(
+        trial_stratify, trial_filters = _load_task_strategy_axes(
             trial_dir=trial_dir,
             repo_root=repo_root,
-            cache=stratify_cache,
-        ):
+            cache=strategy_axes_cache,
+        )
+        for dimension in trial_stratify:
             if dimension not in stratify_fields:
                 stratify_fields.append(dimension)
+        for dimension in trial_filters:
+            if dimension not in filter_fields:
+                filter_fields.append(dimension)
         for context in _iter_contexts(artifact):
             context_key = str(context.get("key") or "").strip()
             if not context_key:
@@ -353,8 +358,9 @@ def build_job_aggregation(
         repo_root=repo_root,
         persona_paths=list(persona_profile_cache.keys()),
     )
-    if overlay_labels:
-        overlay_ids = [key for key in overlay_labels if key]
+    overlay_ids = [key for key in overlay_labels if key]
+    study_axes = _ordered_unique(overlay_ids + filter_fields + stratify_fields)
+    if overlay_ids:
         stratify_fields = overlay_ids + [
             field for field in stratify_fields if field not in overlay_labels
         ]
@@ -366,6 +372,7 @@ def build_job_aggregation(
             field_values=field_values,
             persona_dimensions=persona_dimensions_by_id,
             stratify_fields=stratify_fields,
+            study_axes=study_axes,
             dimension_labels=overlay_labels,
         )
         for key in sorted(context_meta)
@@ -707,43 +714,64 @@ def _load_task_reporting_config(
     return {}
 
 
-def _load_task_stratify_fields(
+def _load_task_strategy_axes(
     *,
     trial_dir: Path,
     repo_root: Path | None,
-    cache: dict[str, list[str]],
-) -> list[str]:
-    """Default persona axes for the cross-tab lens (persona_strategy.json).
+    cache: dict[str, tuple[list[str], list[str]]],
+) -> tuple[list[str], list[str]]:
+    """Return ``(stratify_fields, filter_fields)`` from ``persona_strategy.json``.
 
-    Uses ``sampling.fields`` — the dimensions the cohort was balanced across.
-    When a strategy declares no stratify fields, falls back to the keys of
-    ``dimensionFilters`` so a distribution directive without explicit axes still
-    resolves to meaningful segments.
+    Stratify uses ``sampling.fields`` — the dimensions the cohort was balanced
+    across. When a strategy declares no stratify fields, falls back to the keys
+    of ``dimensionFilters`` so a distribution directive without explicit axes
+    still resolves to meaningful segments.
+
+    Filter fields are always the ``dimensionFilters`` keys (the task's declared
+    cohort universe), even when ``sampling.fields`` is set.
     """
     task_path = _task_path_from_trial_config(trial_dir)
     if not task_path or repo_root is None:
-        return []
+        return [], []
     cached = cache.get(task_path)
     if cached is not None:
         return cached
     strategy_path = (repo_root / task_path).resolve() / "persona_strategy.json"
-    fields: list[str] = []
+    stratify_fields: list[str] = []
+    filter_fields: list[str] = []
     if strategy_path.is_file():
         try:
             payload = json.loads(strategy_path.read_text(encoding="utf-8"))
         except Exception:  # noqa: BLE001
             payload = {}
         if isinstance(payload, dict):
+            filters = payload.get("dimensionFilters")
+            if isinstance(filters, dict):
+                filter_fields = [
+                    str(key).strip() for key in filters if str(key).strip()
+                ]
             sampling = payload.get("sampling")
             raw = sampling.get("fields") if isinstance(sampling, dict) else None
             if isinstance(raw, list):
-                fields = [str(item).strip() for item in raw if str(item).strip()]
-            if not fields:
-                filters = payload.get("dimensionFilters")
-                if isinstance(filters, dict):
-                    fields = [str(key).strip() for key in filters if str(key).strip()]
-    cache[task_path] = fields
-    return fields
+                stratify_fields = [
+                    str(item).strip() for item in raw if str(item).strip()
+                ]
+            if not stratify_fields:
+                stratify_fields = list(filter_fields)
+    result = (stratify_fields, filter_fields)
+    cache[task_path] = result
+    return result
+
+
+def _ordered_unique(items: list[str]) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for item in items:
+        key = str(item).strip()
+        if key and key not in seen:
+            seen.add(key)
+            out.append(key)
+    return out
 
 
 def _task_path_from_trial_config(trial_dir: Path) -> str | None:
@@ -1592,12 +1620,15 @@ def _build_persona_distribution(
     directive_id: str | None = None,
     label: str | None = None,
     dimension_labels: dict[str, str] | None = None,
+    min_segments: int = 2,
+    axis_group: str | None = None,
 ) -> dict[str, Any] | None:
     """Cross-tab one signal facet against one persona dimension.
 
     Returns a distribution object (counts + per-segment stats) or ``None`` when
-    the pairing has fewer than two non-empty segments. Shared by the declared
-    defaults and the interactive explorer options so both render identically.
+    the pairing has fewer than ``min_segments`` non-empty segments. Study axes
+    (task filters / overlays) pass ``min_segments=1`` so a one-arm job still
+    exposes the axis in the explorer. Default insight cards keep ``2``.
     """
     kind = str(facet.get("kind") or "").strip().lower()
     if kind not in {"numerical", "categorical"}:
@@ -1615,7 +1646,7 @@ def _build_persona_distribution(
         for bucket, bucket_entries in bucket_map.items()
         if bucket_entries
     }
-    if len(nonempty) < 2:
+    if len(nonempty) < max(1, min_segments):
         return None
     leaf = _facet_key_leaf(facet)
     buckets: list[dict[str, Any]] = []
@@ -1642,6 +1673,8 @@ def _build_persona_distribution(
         "total": sum(len(items) for items in nonempty.values()),
         "buckets": buckets,
     }
+    if axis_group:
+        distribution["axisGroup"] = axis_group
     if kind == "categorical":
         overall_categories = [
             row["value"] for row in _aggregate_categorical(entries).get("counts", [])
@@ -1732,6 +1765,7 @@ def _persona_distribution_options(
     field_values: dict[str, list[dict[str, Any]]],
     persona_dimensions: dict[str, dict[str, Any]],
     dimension_labels: dict[str, str] | None = None,
+    study_axes: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     """Every eligible ``(signal facet × persona dimension)`` cross-tab.
 
@@ -1740,11 +1774,18 @@ def _persona_distribution_options(
     stays cheap even for large runs. This is *not* rendered by default — it only
     populates the picker; the default cards come from
     :func:`_config_persona_distributions`.
+
+    ``study_axes`` (task ``dimensionFilters`` ∪ overlays) are always offered,
+    even when the job only has one segment. Other YAML dimensions appear under
+    ``axisGroup="more"`` only when they actually split the cohort.
     """
     if not persona_dimensions:
         return []
     context_key = str(meta.get("key") or "")
-    dimension_keys = _persona_dimension_keys(persona_dimensions)
+    yaml_keys = _persona_dimension_keys(persona_dimensions)
+    study = _ordered_unique(list(study_axes or []))
+    study_set = set(study)
+    dimension_keys = _ordered_unique(study + yaml_keys)
     if not dimension_keys:
         return []
     options: list[dict[str, Any]] = []
@@ -1762,6 +1803,7 @@ def _persona_distribution_options(
             if len(distinct) > PERSONA_DISTRIBUTION_MAX_CARDINALITY:
                 continue
         for dimension in dimension_keys:
+            is_study = dimension in study_set
             distribution = _build_persona_distribution(
                 context_key=context_key,
                 facet=facet,
@@ -1769,6 +1811,8 @@ def _persona_distribution_options(
                 dimension=dimension,
                 persona_dimensions=persona_dimensions,
                 dimension_labels=dimension_labels,
+                min_segments=1 if is_study else 2,
+                axis_group="study" if is_study else "more",
             )
             if distribution is not None:
                 options.append(distribution)
@@ -1783,6 +1827,7 @@ def _aggregate_context(
     field_values: dict[str, list[dict[str, Any]]],
     persona_dimensions: dict[str, dict[str, Any]] | None = None,
     stratify_fields: list[str] | None = None,
+    study_axes: list[str] | None = None,
     dimension_labels: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     persona_dimensions = persona_dimensions or {}
@@ -1870,6 +1915,7 @@ def _aggregate_context(
         field_values=field_values,
         persona_dimensions=persona_dimensions,
         dimension_labels=dimension_labels,
+        study_axes=study_axes,
     )
     if persona_distribution_options:
         payload["personaDistributionOptions"] = persona_distribution_options
