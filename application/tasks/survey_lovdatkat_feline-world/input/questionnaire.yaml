@@ -1,0 +1,160 @@
+schemaVersion: "1.0"
+id: lovdatkat_feline_world_v1
+title: LovDatKat Feline World Concept Test
+description: >
+  Exploratory product-concept survey testing consumer response,
+  purchase interest, perceived premium value, wearability,
+  gifting potential, feline motif preference, and pricing
+  for the LovDatKat Feline World scarf collection.
+
+questions:
+
+  - id: q0
+    prompt: Which LovDatKat Feline World concept are you most interested in?
+    type: single_choice
+    construct: concept_preference
+    required: true
+    options:
+      - id: q0_le_chat_classique
+        label: "Le Chat Classique — refined small feline motifs, structured borders, timeless navy, cream, black and ivory."
+      - id: q0_purr_pour
+        label: "Purr & Pour — sophisticated cats mixed with café, coffee, cocktail and city-life imagery."
+      - id: q0_desert_cat
+        label: "Desert Cat — feline motifs combined with Arizona western, desert, stars and turquoise-inspired details."
+      - id: q0_catwalk
+        label: "Catwalk — fashion-forward feline imagery inspired by New York, Paris and runway culture."
+      - id: q0_wild_at_heart
+        label: "Wild at Heart — bold glamorous feline energy with leopard/jaguar-inspired patterns and nightlife influence."
+      - id: q0_none
+        label: "None of these concepts strongly appeal to me."
+
+  - id: q1
+    prompt: Based on your preferred concept, how likely would you be to consider buying a LovDatKat scarf?
+    type: likert
+    construct: purchase_intent
+    required: true
+    minValue: 1
+    maxValue: 5
+
+  - id: q2
+    prompt: How premium or elevated does the overall Feline World concept feel to you?
+    type: likert
+    construct: premium_perception
+    required: true
+    minValue: 1
+    maxValue: 5
+
+  - id: q3
+    prompt: Which approach to the cat imagery would you personally prefer?
+    type: single_choice
+    construct: motif_visibility
+    required: true
+    options:
+      - id: q3_subtle
+        label: "Very subtle — it looks like an elegant pattern first and I discover the cats only when I look closely."
+      - id: q3_balanced
+        label: "Balanced — the feline theme is visible but still sophisticated."
+      - id: q3_obvious
+        label: "Obvious — I want the cats to be an immediate and important part of the design."
+      - id: q3_no_preference
+        label: "I do not have a strong preference."
+
+  - id: q4
+    prompt: What would be the strongest reason you might buy a LovDatKat Feline World scarf?
+    type: single_choice
+    construct: purchase_motivation
+    required: true
+    options:
+      - id: q4_fashion
+        label: "I like the design and would wear it as a fashion accessory."
+      - id: q4_cat_identity
+        label: "I love cats or feline imagery and it reflects my personality."
+      - id: q4_gift
+        label: "It would make a distinctive gift."
+      - id: q4_collectible
+        label: "I would be interested in collecting different designs or stories."
+      - id: q4_expression
+        label: "It feels like a fun or meaningful form of self-expression."
+      - id: q4_none
+        label: "I probably would not buy one."
+
+  - id: q5
+    prompt: Assuming the scarf is made from high-quality silk with premium printing and finishing, what retail price range would feel most reasonable?
+    type: single_choice
+    construct: price_expectation
+    required: true
+    options:
+      - id: q5_under_60
+        label: "Under $60"
+      - id: q5_60_89
+        label: "$60–$89"
+      - id: q5_90_129
+        label: "$90–$129"
+      - id: q5_130_179
+        label: "$130–$179"
+      - id: q5_180_249
+        label: "$180–$249"
+      - id: q5_250_plus
+        label: "$250 or more"
+      - id: q5_would_not_buy
+        label: "I would not buy this product regardless of price."
+
+  - id: q6
+    prompt: How likely would a visually distinctive feline scarf make you stop and look while scrolling through social media or an online store?
+    type: likert
+    construct: stop_scroll
+    required: true
+    minValue: 1
+    maxValue: 5
+
+  - id: q7
+    prompt: How likely would you be to consider a LovDatKat scarf as a gift for someone else?
+    type: likert
+    construct: giftability
+    required: true
+    minValue: 1
+    maxValue: 5
+
+  - id: q8
+    prompt: Who do you think Feline World should primarily be designed for?
+    type: single_choice
+    construct: audience_positioning
+    required: true
+    options:
+      - id: q8_cat_lovers
+        label: "Primarily dedicated cat lovers."
+      - id: q8_fashion_first
+        label: "Fashion-oriented consumers who enjoy a clever feline twist."
+      - id: q8_both
+        label: "Both cat lovers and broader fashion consumers."
+      - id: q8_gift_market
+        label: "Primarily the gift market."
+      - id: q8_unsure
+        label: "I am not sure."
+
+  - id: q9
+    prompt: How distinctive does LovDatKat's idea of sophisticated wearable feline storytelling feel compared with ordinary cat merchandise?
+    type: likert
+    construct: differentiation
+    required: true
+    minValue: 1
+    maxValue: 5
+
+  - id: q10
+    prompt: Overall interest in LovDatKat Feline World.
+    type: likert
+    construct: overall_interest
+    required: true
+    minValue: 1
+    maxValue: 5
+
+  - id: q11
+    prompt: If one of these concepts became a real scarf collection, would you want to see the finished designs?
+    type: single_choice
+    construct: followup_interest
+    required: true
+    options:
+      - id: "true"
+        label: "Yes, I would want to see the finished designs."
+      - id: "false"
+        label: "No, I would probably not follow the collection further."
