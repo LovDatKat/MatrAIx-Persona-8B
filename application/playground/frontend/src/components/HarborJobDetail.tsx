@@ -2216,6 +2216,11 @@ function collectPersonaExplorerEntries(
   return entries
 }
 
+const BREAK_DOWN_BY_HINTS = {
+  study: "reports.report.breakDownByHint",
+  withMore: "reports.report.breakDownByHintWithMore",
+} as const
+
 /**
  * Interactive persona explorer: pick a context and persona dimension to cross-tab.
  * Survey mode hides the result-field picker (answers are always the primary facet).
@@ -2290,21 +2295,45 @@ function PersonaDistributionExplorer({
         : facetOptions[0]?.value ?? ""
   const activeFacet = preferredFacet
 
-  const dimOptions = useMemo((): CockpitSelectOption[] => {
-    const seen = new Map<string, CockpitSelectOption>()
+  const { dimOptions, hasMoreAxes } = useMemo((): {
+    dimOptions: CockpitSelectOption[]
+    hasMoreAxes: boolean
+  } => {
+    const pending: Array<{
+      value: string
+      label: string
+      axisGroup: "study" | "more"
+    }> = []
+    const seen = new Set<string>()
+    let hasMore = false
     for (const entry of entries) {
       if (entry.contextKey !== activeContext) continue
       if (entry.distribution.facetKey !== activeFacet) continue
       const dimension = entry.distribution.groupByPersonaDimension
-      if (!seen.has(dimension)) {
-        seen.set(dimension, {
-          value: dimension,
-          label: entry.distribution.groupByLabel,
-        })
-      }
+      if (!dimension || seen.has(dimension)) continue
+      seen.add(dimension)
+      const axisGroup =
+        entry.distribution.axisGroup === "more" ? "more" : "study"
+      if (axisGroup === "more") hasMore = true
+      pending.push({
+        value: dimension,
+        label: entry.distribution.groupByLabel,
+        axisGroup,
+      })
     }
-    return [...seen.values()]
-  }, [entries, activeContext, activeFacet])
+    return {
+      dimOptions: pending.map((item) => ({
+        value: item.value,
+        label: item.label,
+        group: hasMore
+          ? item.axisGroup === "more"
+            ? t("reports.report.axisGroupMore")
+            : t("reports.report.axisGroupStudy")
+          : undefined,
+      })),
+      hasMoreAxes: hasMore,
+    }
+  }, [entries, activeContext, activeFacet, t])
 
   const [dimValue, setDimValue] = useState<string>(dimOptions[0]?.value ?? "")
   const activeDim = dimOptions.some((option) => option.value === dimValue)
@@ -2369,7 +2398,7 @@ function PersonaDistributionExplorer({
                 value={activeDim}
                 options={dimOptions}
                 onChange={setDimValue}
-                hint={t("reports.report.breakDownByHint")}
+                hint={t(BREAK_DOWN_BY_HINTS[hasMoreAxes ? "withMore" : "study"])}
               />
             ) : (
               <p className="rounded-lg border border-outline/35 bg-surface/40 px-3 py-2 text-[12px] text-text-dim">

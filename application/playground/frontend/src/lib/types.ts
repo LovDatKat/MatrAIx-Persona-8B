@@ -735,6 +735,8 @@ export interface JobAggregationPersonaDistribution {
   groupByPersonaDimension: string;
   groupByLabel: string;
   lens?: string | null;
+  /** ``study`` = task filters / overlays; ``more`` = other YAML dims that split. */
+  axisGroup?: "study" | "more";
   total: number;
   /** Stable category column order (categorical only). */
   categories?: string[] | null;
