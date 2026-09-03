@@ -2146,11 +2146,6 @@ class PersonaPoolService:
 
         # Production 1M: sample + materialize a YAML cohort. Never synthesize.
         if is_production_1m_root(persona_pool):
-            if portions:
-                raise ValueError(
-                    "portions target is not yet supported for matraix-persona-1m; "
-                    "sample from a dev/generated pool to hit a declared mix"
-                )
             result = sample_production_1m(
                 repo_root=self.repo_root,
                 sample_size=sample_size,
@@ -2160,6 +2155,7 @@ class PersonaPoolService:
                 stratify_fields=stratify_fields,
                 sample_size_per_value_group=sample_size_per_value_group,
                 allocation=allocation_norm,
+                portions=portions,
             )
             return self._shape_sample_response(
                 result,
